@@ -1,0 +1,15 @@
+# Python scripts (run locally only)
+*.py
+*.command
+
+# VS Code workspace
+*.code-workspace
+
+# Personal documents
+*.txt
+
+# macOS
+.DS_Store
+
+# Temp
+/tmp/

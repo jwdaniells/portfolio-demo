@@ -1,0 +1,634 @@
+{
+  "meta": {
+    "analysisDate": "2026-03-05",
+    "analysisDateDisplay": "5 Mar 2026",
+    "version": "v1.1"
+  },
+  "indicators": {
+    "VIX": {
+      "name": "CBOE Volatility Index (VIX)",
+      "desc": "Fear gauge \u2014 measures expected S&P 500 volatility over 30 days",
+      "value": 20.75,
+      "date": "2026-03-05",
+      "signal": "caution",
+      "change_1m": 0.2699,
+      "change_3m": 0.315,
+      "change_6m": 0.3733,
+      "thresholds": {
+        "bull": [
+          0,
+          15,
+          "Low fear \u2014 calm markets"
+        ],
+        "neutral": [
+          15,
+          20,
+          "Normal range"
+        ],
+        "caution": [
+          20,
+          30,
+          "Elevated anxiety \u2014 potential correction"
+        ],
+        "bear": [
+          30,
+          999,
+          "High fear \u2014 sell-off likely in progress"
+        ]
+      }
+    },
+    "SP500": {
+      "name": "S&P 500",
+      "desc": "US large-cap benchmark \u2014 world equity market leader",
+      "value": 6869.5,
+      "date": "2026-03-04",
+      "signal": "neutral",
+      "change_1m": -0.0143,
+      "change_3m": 0.0084,
+      "change_6m": null,
+      "thresholds": null
+    },
+    "FTSE100": {
+      "name": "FTSE 100",
+      "desc": "UK large-cap benchmark",
+      "value": 10616.85,
+      "date": "2026-03-05",
+      "signal": "neutral",
+      "change_1m": 0.0266,
+      "change_3m": 0.0942,
+      "change_6m": 0.153,
+      "thresholds": null
+    },
+    "US10Y": {
+      "name": "US 10-Year Treasury Yield",
+      "desc": "Key bond yield \u2014 rising yields pressure equities",
+      "value": 4.08,
+      "date": "2026-03-04",
+      "signal": "neutral",
+      "change_1m": -0.038,
+      "change_3m": 0.0057,
+      "change_6m": -0.0015,
+      "thresholds": {
+        "bull": [
+          0,
+          3.5,
+          "Low yields \u2014 supportive for equities"
+        ],
+        "neutral": [
+          3.5,
+          4.5,
+          "Normal range"
+        ],
+        "caution": [
+          4.5,
+          5.0,
+          "Elevated \u2014 tightening financial conditions"
+        ],
+        "bear": [
+          5.0,
+          999,
+          "Very high \u2014 significant headwind for equities"
+        ]
+      }
+    },
+    "GOLD": {
+      "name": "Gold (USD/oz)",
+      "desc": "Safe-haven asset \u2014 rising gold signals risk aversion",
+      "value": 5185.0,
+      "date": "2026-03-05",
+      "signal": "neutral",
+      "change_1m": 0.0999,
+      "change_3m": 0.2292,
+      "change_6m": null,
+      "thresholds": null
+    },
+    "DXY": {
+      "name": "US Dollar Index (DXY)",
+      "desc": "Dollar strength \u2014 strong dollar pressures EM and commodities",
+      "value": 98.87,
+      "date": "2026-03-05",
+      "signal": "bull",
+      "change_1m": 0.0107,
+      "change_3m": 0.0073,
+      "change_6m": 0.0119,
+      "thresholds": {
+        "bull": [
+          0,
+          100,
+          "Weak dollar \u2014 supportive for global assets"
+        ],
+        "neutral": [
+          100,
+          105,
+          "Normal range"
+        ],
+        "caution": [
+          105,
+          110,
+          "Strong dollar \u2014 headwind for int'l returns"
+        ],
+        "bear": [
+          110,
+          999,
+          "Very strong \u2014 significant FX drag"
+        ]
+      }
+    },
+    "BUFFETT": {
+      "name": "Buffett Indicator (est.)",
+      "desc": "Total market cap / GDP \u2014 Warren Buffett's preferred valuation metric",
+      "value": 186.4,
+      "date": "2026-03-04",
+      "signal": "bear",
+      "change_1m": null,
+      "change_3m": null,
+      "change_6m": null,
+      "thresholds": {
+        "bull": [
+          0,
+          100,
+          "Undervalued \u2014 historically good entry point"
+        ],
+        "neutral": [
+          100,
+          140,
+          "Fair value \u2014 normal range"
+        ],
+        "caution": [
+          140,
+          180,
+          "Overvalued \u2014 below-average future returns"
+        ],
+        "bear": [
+          180,
+          999,
+          "Significantly overvalued \u2014 elevated risk"
+        ]
+      }
+    },
+    "CAPE": {
+      "name": "Shiller CAPE Ratio (est.)",
+      "desc": "Cyclically-adjusted P/E \u2014 Buffett-style valuation indicator",
+      "value": 34.3,
+      "date": "2026-03-04",
+      "signal": "caution",
+      "change_1m": null,
+      "change_3m": null,
+      "change_6m": null,
+      "thresholds": {
+        "bull": [
+          0,
+          20,
+          "Cheap \u2014 strong long-term value"
+        ],
+        "neutral": [
+          20,
+          28,
+          "Fair value"
+        ],
+        "caution": [
+          28,
+          35,
+          "Expensive \u2014 below-average future returns"
+        ],
+        "bear": [
+          35,
+          999,
+          "Very expensive \u2014 elevated crash risk"
+        ]
+      }
+    }
+  },
+  "marketRegime": "Mixed",
+  "reminders": [
+    {
+      "id": 1,
+      "text": "Revisit Liontrust \u2014 review performance and consider switching to VGAC/SWDA",
+      "created": "2026-03-05",
+      "due": "2026-04-04",
+      "status": "active"
+    }
+  ],
+  "summary": {
+    "currentValue": 854333,
+    "projectedReturn12m": 0.14224385176321794,
+    "projectedValue12m": 1001519,
+    "projectedGoalValue": 1809414,
+    "goal": 1400000,
+    "goalDate": "Feb 2031",
+    "monthsRemaining": 59.7,
+    "requiredRateFromNow": 0.0815,
+    "requiredRateOrig": 0.079,
+    "onTrack": true,
+    "overallSentiment": "Bullish",
+    "sentimentBreakdown": {
+      "bullish": 6,
+      "neutral": 2,
+      "bearish": 2
+    }
+  },
+  "holdings": [
+    {
+      "ticker": "BCHS",
+      "name": "Invesco CoinShares Global Blockchain ETF GBP",
+      "bucket": "High Beta / Blockchain",
+      "isin": "IE00BGV5VN51",
+      "currentPrice": 115.32,
+      "returns": {
+        "latestPrice": 116.16,
+        "latestDate": "2026-03-05",
+        "1m_return": 0.0231,
+        "1m_annualized": 0.3149,
+        "3m_return": -0.0545,
+        "3m_annualized": -0.2009,
+        "6m_return": 0.0907,
+        "6m_annualized": 0.1896,
+        "volatility_30d": 0.3986,
+        "52w_high": 147.19,
+        "52w_low": 63.0,
+        "pct_from_52w_high": -0.2108
+      },
+      "analyst": null,
+      "projection": {
+        "projected_return_6m": 0.006,
+        "projected_return_12m": 0.0121,
+        "sentiment": "Moderately Bearish",
+        "confidence": "Medium"
+      },
+      "narrative": "Recent 3-month move: lost 5.5%. Currently 21% below its 52-week high. High volatility (40% annualised). Projected 12-month return: +1.2%."
+    },
+    {
+      "ticker": "BNY",
+      "name": "BNY Mellon Multi-Asset Balanced Inst W Acc",
+      "bucket": "Core Multi-Asset / Balanced",
+      "isin": "GB00B86LX253",
+      "currentPrice": 2.8613,
+      "returns": {
+        "latestPrice": 2.8613,
+        "latestDate": "2026-03-03",
+        "1m_return": 0.0239,
+        "1m_annualized": 0.3272,
+        "3m_return": 0.0325,
+        "3m_annualized": 0.1364,
+        "6m_return": 0.0937,
+        "6m_annualized": 0.1962,
+        "volatility_30d": 0.0669,
+        "52w_high": 2.9061,
+        "52w_low": 2.2928,
+        "pct_from_52w_high": -0.0154
+      },
+      "analyst": null,
+      "projection": {
+        "projected_return_6m": 0.0812,
+        "projected_return_12m": 0.169,
+        "sentiment": "Bullish",
+        "confidence": "Medium"
+      },
+      "narrative": "Recent 3-month move: gained 3.2%. Trading near its 52-week high. Low volatility (7% annualised). Projected 12-month return: +16.9%."
+    },
+    {
+      "ticker": "HSBC",
+      "name": "HSBC Global Strategy Balanced C Acc",
+      "bucket": "Core Multi-Asset / Balanced",
+      "isin": "GB00B76WP695",
+      "currentPrice": 3.0036,
+      "returns": {
+        "latestPrice": 3.0036,
+        "latestDate": "2026-03-03",
+        "1m_return": 0.0152,
+        "1m_annualized": 0.1981,
+        "3m_return": 0.0221,
+        "3m_annualized": 0.0913,
+        "6m_return": 0.0758,
+        "6m_annualized": 0.1573,
+        "volatility_30d": 0.0751,
+        "52w_high": 3.0617,
+        "52w_low": 2.452,
+        "pct_from_52w_high": -0.019
+      },
+      "analyst": null,
+      "projection": {
+        "projected_return_6m": 0.0617,
+        "projected_return_12m": 0.1273,
+        "sentiment": "Moderately Bullish",
+        "confidence": "Medium"
+      },
+      "narrative": "Recent 3-month move: gained 2.2%. Trading near its 52-week high. Low volatility (8% annualised). Projected 12-month return: +12.7%."
+    },
+    {
+      "ticker": "HISL",
+      "name": "HSBC Islamic Global Equity Index IC GBP",
+      "bucket": "Global Equity",
+      "isin": "LU2092164776",
+      "currentPrice": 20.167,
+      "returns": {
+        "latestPrice": 20.167,
+        "latestDate": "2026-03-02",
+        "1m_return": 0.007,
+        "1m_annualized": 0.0872,
+        "3m_return": 0.0294,
+        "3m_annualized": 0.1229,
+        "6m_return": 0.1162,
+        "6m_annualized": 0.2458,
+        "volatility_30d": 0.1299,
+        "52w_high": 20.514,
+        "52w_low": 14.487,
+        "pct_from_52w_high": -0.0169
+      },
+      "analyst": null,
+      "projection": {
+        "projected_return_6m": 0.0908,
+        "projected_return_12m": 0.1899,
+        "sentiment": "Bullish",
+        "confidence": "Medium"
+      },
+      "narrative": "Recent 3-month move: gained 2.9%. Trading near its 52-week high. Projected 12-month return: +19.0%."
+    },
+    {
+      "ticker": "LION",
+      "name": "Liontrust Sustainable Future Managed 6 Net Acc",
+      "bucket": "Thematic / Sustainable Equity",
+      "isin": "GB00B8FDBQ23",
+      "currentPrice": 2.818,
+      "returns": {
+        "latestPrice": 2.818,
+        "latestDate": "2026-03-03",
+        "1m_return": 0.0017,
+        "1m_annualized": 0.0211,
+        "3m_return": -0.0149,
+        "3m_annualized": -0.0583,
+        "6m_return": 0.0086,
+        "6m_annualized": 0.0173,
+        "volatility_30d": 0.1009,
+        "52w_high": 2.926,
+        "52w_low": 2.4261,
+        "pct_from_52w_high": -0.0369
+      },
+      "analyst": null,
+      "projection": {
+        "projected_return_6m": -0.0086,
+        "projected_return_12m": -0.0171,
+        "sentiment": "Bearish",
+        "confidence": "Medium"
+      },
+      "narrative": "Recent 3-month move: lost 1.5%. Projected 12-month return: -1.7%."
+    },
+    {
+      "ticker": "PMIT",
+      "name": "Premier Miton Diversified Growth D Acc",
+      "bucket": "Diversified Growth",
+      "isin": "GB00BMQ5L211",
+      "currentPrice": 2.304,
+      "returns": {
+        "latestPrice": 2.304,
+        "latestDate": "2026-03-03",
+        "1m_return": 0.0044,
+        "1m_annualized": 0.0536,
+        "3m_return": 0.0066,
+        "3m_annualized": 0.0265,
+        "6m_return": 0.0092,
+        "6m_annualized": 0.0185,
+        "volatility_30d": 0.0692,
+        "52w_high": 2.348,
+        "52w_low": 1.996,
+        "pct_from_52w_high": -0.0187
+      },
+      "analyst": null,
+      "projection": {
+        "projected_return_6m": 0.011,
+        "projected_return_12m": 0.0221,
+        "sentiment": "Neutral",
+        "confidence": "Medium"
+      },
+      "narrative": "Recent 3-month move: gained 0.7%. Trading near its 52-week high. Low volatility (7% annualised). Projected 12-month return: +2.2%."
+    },
+    {
+      "ticker": "VLS80",
+      "name": "Vanguard LifeStrategy 80% Equity A Acc",
+      "bucket": "Core Multi-Asset / Balanced",
+      "isin": "GB00B4PQW151",
+      "currentPrice": 368.8169,
+      "returns": {
+        "latestPrice": 368.816895,
+        "latestDate": "2026-03-02",
+        "1m_return": 0.0323,
+        "1m_annualized": 0.4651,
+        "3m_return": 0.0477,
+        "3m_annualized": 0.2047,
+        "6m_return": 0.1165,
+        "6m_annualized": 0.2466,
+        "volatility_30d": 0.0588,
+        "52w_high": 370.2667,
+        "52w_low": 282.6043,
+        "pct_from_52w_high": -0.0039
+      },
+      "analyst": null,
+      "projection": {
+        "projected_return_6m": 0.108,
+        "projected_return_12m": 0.2276,
+        "sentiment": "Bullish",
+        "confidence": "Medium"
+      },
+      "narrative": "Recent 3-month move: gained 4.8%. Trading near its 52-week high. Low volatility (6% annualised). Projected 12-month return: +22.8%."
+    },
+    {
+      "ticker": "RLSE",
+      "name": "Royal London Sterling Extra Yield Bond A",
+      "bucket": "Income / Bond",
+      "isin": "IE0032571485",
+      "currentPrice": 1.1322,
+      "returns": {
+        "latestPrice": 1.1322,
+        "latestDate": "2026-03-02",
+        "1m_return": 0.0078,
+        "1m_annualized": 0.0982,
+        "3m_return": 0.0097,
+        "3m_annualized": 0.0395,
+        "6m_return": 0.0122,
+        "6m_annualized": 0.0246,
+        "volatility_30d": 0.0507,
+        "52w_high": 1.1413,
+        "52w_low": 1.0692,
+        "pct_from_52w_high": -0.008
+      },
+      "analyst": null,
+      "projection": {
+        "projected_return_6m": 0.0156,
+        "projected_return_12m": 0.0314,
+        "sentiment": "Neutral",
+        "confidence": "Medium"
+      },
+      "narrative": "Recent 3-month move: gained 1.0%. Trading near its 52-week high. Low volatility (5% annualised). Projected 12-month return: +3.1%."
+    },
+    {
+      "ticker": "SWDA",
+      "name": "iShares Core MSCI World ETF (Acc) GBP",
+      "bucket": "Global Equity Core",
+      "isin": "IE00B4L5Y983",
+      "currentPrice": 99.11,
+      "returns": {
+        "latestPrice": 99.36,
+        "latestDate": "2026-03-05",
+        "1m_return": 0.0202,
+        "1m_annualized": 0.2716,
+        "3m_return": 0.0171,
+        "3m_annualized": 0.0702,
+        "6m_return": 0.0889,
+        "6m_annualized": 0.1857,
+        "1y_return": 0.1779,
+        "1y_annualized": 0.1779,
+        "volatility_30d": 0.1014,
+        "52w_high": 128.3781,
+        "52w_low": 73.85,
+        "pct_from_52w_high": -0.226
+      },
+      "analyst": null,
+      "projection": {
+        "projected_return_6m": 0.0711,
+        "projected_return_12m": 0.1472,
+        "sentiment": "Bullish",
+        "confidence": "Medium"
+      },
+      "narrative": "Up 17.8% over the past year. Recent 3-month move: gained 1.7%. Currently 23% below its 52-week high. Projected 12-month return: +14.7%."
+    },
+    {
+      "ticker": "VGAC",
+      "name": "Vanguard FTSE Global All Cap Index GBP Acc",
+      "bucket": "Global Equity Core",
+      "isin": "GB00BD3RZ582",
+      "currentPrice": 270.4554,
+      "returns": {
+        "latestPrice": 270.455414,
+        "latestDate": "2026-03-02",
+        "1m_return": 0.0359,
+        "1m_annualized": 0.5265,
+        "3m_return": 0.0429,
+        "3m_annualized": 0.1831,
+        "6m_return": 0.1211,
+        "6m_annualized": 0.257,
+        "volatility_30d": 0.0766,
+        "52w_high": 270.7728,
+        "52w_low": 197.8545,
+        "pct_from_52w_high": -0.0012
+      },
+      "analyst": null,
+      "projection": {
+        "projected_return_6m": 0.1061,
+        "projected_return_12m": 0.2234,
+        "sentiment": "Bullish",
+        "confidence": "Medium"
+      },
+      "narrative": "Recent 3-month move: gained 4.3%. Trading near its 52-week high. Low volatility (8% annualised). Projected 12-month return: +22.3%."
+    }
+  ],
+  "crypto": [
+    {
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "returns": {
+        "latestPrice": 54375.414062,
+        "latestDate": "2026-03-05",
+        "1m_return": 0.1182,
+        "1m_annualized": 2.8224,
+        "3m_return": -0.1743,
+        "3m_annualized": -0.5352,
+        "6m_return": -0.3394,
+        "6m_annualized": -0.5635,
+        "1y_return": -0.3022,
+        "1y_annualized": -0.3022,
+        "volatility_30d": 0.6446,
+        "52w_high": 92515.3516,
+        "52w_low": 46373.3438,
+        "pct_from_52w_high": -0.4123
+      },
+      "projection": {
+        "projected_return_6m": -0.1821,
+        "projected_return_12m": -0.3311,
+        "sentiment": "Moderately Bearish",
+        "confidence": "Medium"
+      },
+      "narrative": "Down 30.2% over the past year. Recent 3-month move: lost 17.4%. Currently 41% below its 52-week high. High volatility (64% annualised). Projected 12-month return: -33.1%."
+    },
+    {
+      "symbol": "ETH",
+      "name": "Ethereum",
+      "returns": {
+        "latestPrice": 1593.90332,
+        "latestDate": "2026-03-05",
+        "1m_return": 0.1149,
+        "1m_annualized": 2.6884,
+        "3m_return": -0.2842,
+        "3m_annualized": -0.7375,
+        "6m_return": -0.4487,
+        "6m_annualized": -0.6961,
+        "1y_return": -0.0945,
+        "1y_annualized": -0.0945,
+        "volatility_30d": 0.7742,
+        "52w_high": 3572.1641,
+        "52w_low": 1347.2839,
+        "pct_from_52w_high": -0.5538
+      },
+      "projection": {
+        "projected_return_6m": -0.2029,
+        "projected_return_12m": -0.3647,
+        "sentiment": "Moderately Bearish",
+        "confidence": "Medium"
+      },
+      "narrative": "Down 9.4% over the past year. Recent 3-month move: lost 28.4%. Currently 55% below its 52-week high. High volatility (77% annualised). Projected 12-month return: -36.5%."
+    },
+    {
+      "symbol": "XRP",
+      "name": "XRP",
+      "returns": {
+        "latestPrice": 1.067309,
+        "latestDate": "2026-03-05",
+        "1m_return": 0.0671,
+        "1m_annualized": 1.1808,
+        "3m_return": -0.2342,
+        "3m_annualized": -0.6561,
+        "6m_return": -0.4243,
+        "6m_annualized": -0.6686,
+        "1y_return": -0.3043,
+        "1y_annualized": -0.3043,
+        "volatility_30d": 0.9243,
+        "52w_high": 2.636,
+        "52w_low": 0.8975,
+        "pct_from_52w_high": -0.5951
+      },
+      "projection": {
+        "projected_return_6m": -0.2162,
+        "projected_return_12m": -0.3856,
+        "sentiment": "Moderately Bearish",
+        "confidence": "Medium"
+      },
+      "narrative": "Down 30.4% over the past year. Recent 3-month move: lost 23.4%. Currently 60% below its 52-week high. High volatility (92% annualised). Projected 12-month return: -38.6%."
+    },
+    {
+      "symbol": "ADA",
+      "name": "Cardano",
+      "returns": {
+        "latestPrice": 0.204471,
+        "latestDate": "2026-03-05",
+        "1m_return": 0.0539,
+        "1m_annualized": 0.8769,
+        "3m_return": -0.2266,
+        "3m_annualized": -0.6422,
+        "6m_return": -0.5524,
+        "6m_annualized": -0.7997,
+        "1y_return": -0.4934,
+        "1y_annualized": -0.4934,
+        "volatility_30d": 0.8253,
+        "52w_high": 0.7096,
+        "52w_low": 0.1811,
+        "pct_from_52w_high": -0.7118
+      },
+      "projection": {
+        "projected_return_6m": -0.264,
+        "projected_return_12m": -0.4583,
+        "sentiment": "Moderately Bearish",
+        "confidence": "Medium"
+      },
+      "narrative": "Down 49.3% over the past year. Recent 3-month move: lost 22.7%. Currently 71% below its 52-week high. High volatility (83% annualised). Projected 12-month return: -45.8%."
+    }
+  ]
+}

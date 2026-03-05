@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portfolio Tracker</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1923; }
+
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; background: #0f1923;
+    }
+    #login-box {
+      background: #1a2530; border: 1px solid #c9a84c44; border-radius: 12px;
+      padding: 40px 48px; text-align: center; width: 340px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    #login-box h1 {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 18px; font-weight: 600; color: #c9a84c;
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;
+    }
+    #login-box p {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 12px; color: #6a7d8f; margin-bottom: 28px;
+    }
+    #login-box input {
+      width: 100%; padding: 10px 14px; font-size: 15px;
+      background: #0f1923; border: 1px solid #2e4057; border-radius: 6px;
+      color: #e8dcc8; outline: none; margin-bottom: 14px;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      transition: border-color 0.2s;
+    }
+    #login-box input:focus { border-color: #c9a84c88; }
+    #login-box button {
+      width: 100%; padding: 10px; font-size: 14px; font-weight: 600;
+      background: #c9a84c; border: none; border-radius: 6px;
+      color: #0f1923; cursor: pointer; letter-spacing: 0.06em;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      transition: background 0.2s;
+    }
+    #login-box button:hover { background: #d9b85c; }
+    #login-error {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 12px; color: #e07060; margin-top: 10px; min-height: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login screen — shown before app loads -->
+  <div id="login-screen">
+    <div id="login-box">
+      <h1>Portfolio Tracker</h1>
+      <p>Enter your password to continue</p>
+      <input type="password" id="pw-input" placeholder="Password" autocomplete="current-password"/>
+      <button id="pw-btn">Unlock</button>
+      <div id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- App root — hidden until authenticated -->
+  <div id="root" style="display:none"></div>
+
+  <script>
+    // ── Password gate ──────────────────────────────────────────────────────────
+    // SHA-256 hash of the password. To change it, run:
+    //   echo -n "yournewpassword" | shasum -a 256
+    // and replace the hash string below.
+    const PASSWORD_HASH = "281404cb435166454249a48d233765feb89ed15f33702c2b69281de8039d8d23";
+
+    async function sha256(str) {
+      const buf = await crypto.subtle.digest("SHA-256",
+        new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf))
+        .map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function attemptLogin() {
+      const pw = document.getElementById("pw-input").value;
+      if (!pw) return;
+      const hash = await sha256(pw);
+      if (hash === PASSWORD_HASH) {
+        sessionStorage.setItem("pt_auth", "1");
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("root").style.display = "block";
+        loadApp();
+      } else {
+        const err = document.getElementById("login-error");
+        err.textContent = "Incorrect password";
+        document.getElementById("pw-input").value = "";
+        document.getElementById("pw-input").focus();
+        setTimeout(() => { err.textContent = ""; }, 3000);
+      }
+    }
+
+    document.getElementById("pw-btn").addEventListener("click", attemptLogin);
+    document.getElementById("pw-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") attemptLogin();
+    });
+
+    // Skip login if already authenticated this session
+    if (sessionStorage.getItem("pt_auth") === "1") {
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("root").style.display = "block";
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+  </script>
+
+  <script>
+    // Mock window.storage (iPushPull API) for local preview
+    window.storage = {
+      _store: {},
+      get: function(key) {
+        return Promise.resolve(
+          this._store[key] ? { value: this._store[key] } : null
+        );
+      },
+      set: function(key, value) {
+        this._store[key] = value;
+        return Promise.resolve();
+      }
+    };
+  </script>
+
+  <script>
+    function loadApp() {
+      // Fetch the JSX, strip ES module syntax, transform with Babel, then mount
+      fetch('./portfolio_tracker_v1.20.jsx?v=' + Date.now())
+        .then(r => r.text())
+        .then(src => {
+          const modified = src
+            .replace('import { useState, useEffect } from "react";',
+                     'const { useState, useEffect } = React;')
+            .replace('export default function PortfolioTracker',
+                     'window.PortfolioTracker = function PortfolioTracker');
+
+          const transformed = Babel.transform(modified, { presets: ['react'] }).code;
+          eval(transformed);
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(React.createElement(window.PortfolioTracker));
+        })
+        .catch(err => {
+          document.getElementById('root').innerHTML =
+            '<div style="color:#e07060;padding:40px;font-family:sans-serif">Error: ' + err + '</div>';
+        });
+    }
+
+    // If already authenticated (session persisted), load immediately
+    if (sessionStorage.getItem("pt_auth") === "1") {
+      loadApp();
+    }
+  </script>
+</body>
+</html>
