@@ -229,8 +229,10 @@ def main(pension_value=None):
 
     total_value = sum(hval(h) for acc in d["accounts"] for h in acc["holdings"])
 
-    d["meta"]["prevDate"]         = d["meta"]["fetchDate"]
-    d["meta"]["prevDateDisplay"]  = d["meta"]["fetchDateDisplay"]
+    # Only roll prevDate forward when this is a new day's fetch
+    if d["meta"].get("fetchDate") != TODAY:
+        d["meta"]["prevDate"]        = d["meta"]["fetchDate"]
+        d["meta"]["prevDateDisplay"] = d["meta"]["fetchDateDisplay"]
     d["meta"]["fetchDate"]        = TODAY
     d["meta"]["fetchDateDisplay"] = TODAY_DISPLAY
 
