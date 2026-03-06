@@ -20,9 +20,11 @@ except ImportError:
     import subprocess; subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
     import requests
 
-JSON_PATH     = Path(__file__).parent / "price_history-2.json"
-TODAY         = datetime.date.today().isoformat()
-TODAY_DISPLAY = datetime.date.today().strftime("%-d %b %Y")
+JSON_PATH        = Path(__file__).parent / "price_history-2.json"
+NOW_UTC          = datetime.datetime.utcnow()
+TODAY            = NOW_UTC.date().isoformat()
+TODAY_DISPLAY    = NOW_UTC.date().strftime("%-d %b %Y")
+FETCH_TIMESTAMP  = NOW_UTC.strftime("%Y-%m-%dT%H:%M:00Z")  # UTC ISO timestamp written to JSON
 
 SESSION = requests.Session()
 SESSION.headers.update({
@@ -235,6 +237,7 @@ def main(pension_value=None):
         d["meta"]["prevDateDisplay"] = d["meta"]["fetchDateDisplay"]
     d["meta"]["fetchDate"]        = TODAY
     d["meta"]["fetchDateDisplay"] = TODAY_DISPLAY
+    d["meta"]["fetchTimestamp"]   = FETCH_TIMESTAMP
 
     failed = [t for t in YAHOO_SYMBOLS if t not in fetched]
     notes  = f"Auto-fetch {TODAY}."

@@ -5,6 +5,7 @@ const _cbv = Date.now();
 const DATA_URL     = `./price_history-2.json?v=${_cbv}`;
 const ANALYSIS_URL = `./analysis.json?v=${_cbv}`;
 const loadTime = () => new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+const fmtFetchTime = (iso) => { if(!iso) return loadTime(); try { return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }); } catch(e) { return loadTime(); } };
 
 
 
@@ -71,7 +72,7 @@ export default function PortfolioTracker() {
         ? stored.crypto.map(c => { const init=cfgCrypto.find(x=>x.id===c.id); return init ? {...c, price:init.price, priceDate:init.priceDate, prevPrice:init.prevPrice} : c; })
         : cfgCrypto;
       const cryptoHistory = cfg.cryptoHistory || [];
-      setData({ meta:cfg.meta, lastFetch:{date:cfg.meta.fetchDateDisplay,time:loadTime(),priceDate:cfg.meta.fetchDate}, accounts, history, crypto, cryptoHistory });
+      setData({ meta:cfg.meta, lastFetch:{date:cfg.meta.fetchDateDisplay,time:fmtFetchTime(cfg.meta.fetchTimestamp),priceDate:cfg.meta.fetchDate}, accounts, history, crypto, cryptoHistory });
     } catch(e) { console.error("Failed to load portfolio data:", e); }
     // Load analysis data (non-blocking — tab still works without it)
     try { const a = await fetch(ANALYSIS_URL).then(r=>r.ok?r.json():null); if(a) setAnalysis(a); } catch {}

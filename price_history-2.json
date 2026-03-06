@@ -4,7 +4,8 @@
     "fetchDate": "2026-03-06",
     "fetchDateDisplay": "6 Mar 2026",
     "prevDate": "2026-03-04",
-    "prevDateDisplay": "4 Mar 2026"
+    "prevDateDisplay": "4 Mar 2026",
+    "fetchTimestamp": "2026-03-06T12:22:00Z"
   },
   "accounts": [
     {
