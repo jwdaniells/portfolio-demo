@@ -5,7 +5,7 @@
     "fetchDateDisplay": "6 Mar 2026",
     "prevDate": "2026-03-04",
     "prevDateDisplay": "4 Mar 2026",
-    "fetchTimestamp": "2026-03-06T17:22:00Z"
+    "fetchTimestamp": "2026-03-06T18:02:00Z"
   },
   "accounts": [
     {
@@ -481,7 +481,7 @@
       "symbol": "BTC",
       "yahooSymbol": "BTC-GBP",
       "units": 2.24061,
-      "price": 51038.25,
+      "price": 50925.17,
       "priceDate": "2026-03-06",
       "prevPrice": 52668.03
     },
@@ -491,7 +491,7 @@
       "symbol": "ETH",
       "yahooSymbol": "ETH-GBP",
       "units": 1.80969,
-      "price": 1472.47,
+      "price": 1470.17,
       "priceDate": "2026-03-06",
       "prevPrice": 1541.15
     },
@@ -501,7 +501,7 @@
       "symbol": "XRP",
       "yahooSymbol": "XRP-GBP",
       "units": 4255.0,
-      "price": 1.012425,
+      "price": 1.008441,
       "priceDate": "2026-03-06",
       "prevPrice": 1.045545
     },
@@ -511,7 +511,7 @@
       "symbol": "ADA",
       "yahooSymbol": "ADA-GBP",
       "units": 831.813,
-      "price": 0.192243,
+      "price": 0.191973,
       "priceDate": "2026-03-06",
       "prevPrice": 0.199629
     }
@@ -523,7 +523,7 @@
     },
     {
       "date": "2026-03-06",
-      "totalValue": 121489.31
+      "totalValue": 121214.6
     }
   ]
 }
