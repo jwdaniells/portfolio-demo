@@ -67,11 +67,11 @@ jobs:
           server_address: smtp.mail.yahoo.com
           server_port: 465
           secure: true
-          username: jdaniells@yahoo.co.uk
+          username: ${{ secrets.YAHOO_EMAIL }}
           password: ${{ secrets.YAHOO_APP_PASSWORD }}
           subject: "✅ Portfolio updated — ${{ steps.fetch.outputs.total }}"
-          to: jdaniells@yahoo.co.uk
-          from: Portfolio Tracker <jdaniells@yahoo.co.uk>
+          to: ${{ secrets.YAHOO_EMAIL }}
+          from: Portfolio Tracker <${{ secrets.YAHOO_EMAIL }}>
           body_path: /tmp/email_summary.txt
           convert_markdown: false
 
@@ -82,11 +82,11 @@ jobs:
           server_address: smtp.mail.yahoo.com
           server_port: 465
           secure: true
-          username: jdaniells@yahoo.co.uk
+          username: ${{ secrets.YAHOO_EMAIL }}
           password: ${{ secrets.YAHOO_APP_PASSWORD }}
           subject: "⚠️ Portfolio Tracker fetch FAILED"
-          to: jdaniells@yahoo.co.uk
-          from: Portfolio Tracker <jdaniells@yahoo.co.uk>
+          to: ${{ secrets.YAHOO_EMAIL }}
+          from: Portfolio Tracker <${{ secrets.YAHOO_EMAIL }}>
           body: |
             The scheduled price fetch failed on GitHub Actions.
 
