@@ -1,5 +1,6 @@
-# Python scripts (run locally only)
-*.py
+# Python scripts — fetch_prices.py IS included (runs on GitHub Actions)
+# Other scripts excluded (local only)
+fetch_analysis.py
 *.command
 
 # VS Code workspace

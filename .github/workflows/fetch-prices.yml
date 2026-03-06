@@ -1,0 +1,84 @@
+name: Fetch Portfolio Prices
+
+on:
+  # Run weekdays at 16:45 UTC (= 16:45 GMT in winter, 17:45 BST in summer)
+  # Both cover the 15 min window after LSE closes at 16:30 London time
+  schedule:
+    - cron: '45 16 * * 1-5'
+
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to commit updated JSON back to the repo
+
+jobs:
+  fetch-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests --quiet
+
+      - name: Fetch prices
+        id: fetch
+        run: |
+          python fetch_prices.py 2>&1 | tee /tmp/fetch_output.txt
+          echo "total=$(grep -o 'Total: £[0-9,]*' /tmp/fetch_output.txt | tail -1)" >> $GITHUB_OUTPUT
+
+      - name: Commit and push updated data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add price_history-2.json
+          # Only commit if something actually changed
+          git diff --cached --quiet || git commit -m "Auto-update prices $(date +'%d %b %Y')"
+          git push
+
+      - name: Send success email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.mail.yahoo.com
+          server_port: 465
+          secure: true
+          username: jdaniells@yahoo.co.uk
+          password: ${{ secrets.YAHOO_APP_PASSWORD }}
+          subject: "Portfolio Tracker updated (${{ steps.fetch.outputs.total || 'see tracker' }})"
+          to: jdaniells@yahoo.co.uk
+          from: Portfolio Tracker <jdaniells@yahoo.co.uk>
+          body: |
+            Portfolio prices fetched and published successfully.
+
+            ${{ steps.fetch.outputs.total }}
+
+            View your tracker:
+            https://jwdaniells.github.io/portfolio-tracker/
+
+            Run date: ${{ github.run_id }} — triggered by schedule
+
+      - name: Send failure email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.mail.yahoo.com
+          server_port: 465
+          secure: true
+          username: jdaniells@yahoo.co.uk
+          password: ${{ secrets.YAHOO_APP_PASSWORD }}
+          subject: "⚠️ Portfolio Tracker fetch FAILED"
+          to: jdaniells@yahoo.co.uk
+          from: Portfolio Tracker <jdaniells@yahoo.co.uk>
+          body: |
+            The scheduled price fetch failed on GitHub Actions.
+
+            Check the run log for details:
+            https://github.com/jwdaniells/portfolio-tracker/actions
