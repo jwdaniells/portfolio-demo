@@ -25,7 +25,7 @@
           "ticker": "BCHS",
           "isin": "IE00BGV5VN51",
           "priceDate": "2026-03-06",
-          "prevPrice": 114.08,
+          "prevPrice": 115.32,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -42,7 +42,7 @@
           "ticker": "BNY",
           "isin": "GB00B86LX253",
           "priceDate": "2026-03-05",
-          "prevPrice": 2.8565,
+          "prevPrice": 2.8613,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -59,7 +59,7 @@
           "ticker": "HSBC",
           "isin": "GB00B76WP695",
           "priceDate": "2026-03-05",
-          "prevPrice": 3.0127,
+          "prevPrice": 3.0036,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -76,7 +76,7 @@
           "ticker": "HISL",
           "isin": "LU2092164776",
           "priceDate": "2026-03-04",
-          "prevPrice": 19.925,
+          "prevPrice": 20.167,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -93,7 +93,7 @@
           "ticker": "LION",
           "isin": "GB00B8FDBQ23",
           "priceDate": "2026-03-05",
-          "prevPrice": 2.8228,
+          "prevPrice": 2.818,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -110,7 +110,7 @@
           "ticker": "PMIT",
           "isin": "GB00BMQ5L211",
           "priceDate": "2026-03-05",
-          "prevPrice": 2.303,
+          "prevPrice": 2.304,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -127,7 +127,7 @@
           "ticker": "VLS80",
           "isin": "GB00B4PQW151",
           "priceDate": "2026-03-04",
-          "prevPrice": 362.9769,
+          "prevPrice": 368.8169,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -152,7 +152,7 @@
           "ticker": "BCHS",
           "isin": "IE00BGV5VN51",
           "priceDate": "2026-03-06",
-          "prevPrice": 114.08,
+          "prevPrice": 115.32,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -170,7 +170,7 @@
           "ticker": "RLSE",
           "isin": "IE0032571485",
           "priceDate": "2026-03-04",
-          "prevPrice": 1.1314,
+          "prevPrice": 1.1322,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -187,7 +187,7 @@
           "ticker": "SWDA",
           "isin": "IE00B4L5Y983",
           "priceDate": "2026-03-06",
-          "prevPrice": 97.89,
+          "prevPrice": 99.11,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -262,7 +262,7 @@
           "ticker": "BNY",
           "isin": "GB00B86LX253",
           "priceDate": "2026-03-05",
-          "prevPrice": 2.8565,
+          "prevPrice": 2.8613,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -279,7 +279,7 @@
           "ticker": "HSBC",
           "isin": "GB00B76WP695",
           "priceDate": "2026-03-05",
-          "prevPrice": 3.0127,
+          "prevPrice": 3.0036,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -296,7 +296,7 @@
           "ticker": "VLS80",
           "isin": "GB00B4PQW151",
           "priceDate": "2026-03-04",
-          "prevPrice": 362.9769,
+          "prevPrice": 368.8169,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -320,7 +320,7 @@
           "ticker": "SWDA",
           "isin": "IE00B4L5Y983",
           "priceDate": "2026-03-06",
-          "prevPrice": 97.89,
+          "prevPrice": 99.11,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
@@ -336,7 +336,7 @@
           "ticker": "VGAC",
           "isin": "GB00BD3RZ582",
           "priceDate": "2026-03-04",
-          "prevPrice": 265.5432,
+          "prevPrice": 270.4554,
           "fetchStatus": {
             "ok": true,
             "source": "Yahoo Finance 2026-03-06"
