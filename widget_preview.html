@@ -51,6 +51,7 @@
   .mover-cell   { display: flex; justify-content: space-between; align-items: center; }
   .mover-ticker { font-size: 9px; font-weight: 700; color: #e8dcc8; }
   .mover-val    { font-size: 9px; }
+  .crypto-row   { display: flex; align-items: center; gap: 6px; margin-top: 3px; padding-top: 3px; border-top: 1px solid #2a3d50; }
 
   canvas { display: block; width: 100%; height: 30px; margin: 5px 0 0; }
 
@@ -155,10 +156,22 @@ function drawSparkline(canvas, history, up) {
   ctx.stroke()
 }
 
+function calcCrypto(d) {
+  let total = 0, prev = 0
+  for (const c of d.crypto || []) {
+    if (c.units != null && c.price != null) {
+      total += c.units * c.price
+      prev  += c.units * (c.prevPrice != null ? c.prevPrice : c.price)
+    }
+  }
+  return { total, change: total - prev, pct: prev > 0 ? (total - prev) / prev : 0 }
+}
+
 function render(d) {
   const w = document.getElementById("widget")
   const meta = d.meta || {}
   const { total, change, pct, movers } = calc(d)
+  const crypto = calcCrypto(d)
   const up = change >= 0
   const col = up ? "green" : "red"
   const arrow = up ? "▲" : "▼"
@@ -185,6 +198,12 @@ function render(d) {
       </div>`
     }).join("")}
     </div>
+    ${crypto.total > 0 ? `
+    <div class="crypto-row">
+      <span class="header-label muted">Crypto</span>
+      <span class="gold" style="font-size:9px;font-weight:700">${fmt(crypto.total)}</span>
+      <span class="${crypto.change>=0?'green':'red'}" style="font-size:9px">${crypto.change>=0?'▲':'▼'}&nbsp;${fmt(Math.abs(crypto.change))}&nbsp;&nbsp;${fmtPct(crypto.pct)}</span>
+    </div>` : ""}
   `
 
   const canvas = document.getElementById("spark")

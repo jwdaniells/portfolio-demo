@@ -1,0 +1,48 @@
+name: Send Widget Script by Email
+
+on:
+  workflow_dispatch:
+
+jobs:
+  send-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Prepare email body
+        run: |
+          cat << 'EOF' > /tmp/widget_email_body.txt
+          Your Scriptable iOS widget script is attached as ios_widget.js.
+
+          Installation steps:
+          1. Install Scriptable (free) from the App Store if you haven't already.
+          2. Open Scriptable → tap + to create a new script.
+          3. Name it: Daniells Portfolio
+          4. Paste the entire contents of the attached file into the script editor.
+          5. Tap the run button (▶) to test — it should present a medium widget preview.
+          6. Go to your Home Screen → long-press → add widget → Scriptable → choose medium size.
+          7. Long-press the widget → Edit Widget → set Script to "Daniells Portfolio".
+
+          The widget auto-refreshes from:
+          https://raw.githubusercontent.com/jwdaniells/portfolio-tracker/main/price_history-2.json
+
+          View your tracker:
+          https://jwdaniells.github.io/portfolio-tracker/
+          EOF
+
+      - name: Send widget script email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.mail.yahoo.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.YAHOO_EMAIL }}
+          password: ${{ secrets.YAHOO_APP_PASSWORD }}
+          subject: "📱 Daniells Portfolio — iOS Widget Script (Scriptable)"
+          to: ${{ secrets.YAHOO_EMAIL }}
+          from: Portfolio Tracker <${{ secrets.YAHOO_EMAIL }}>
+          body_path: /tmp/widget_email_body.txt
+          attachments: ios_widget.js
+          convert_markdown: false
