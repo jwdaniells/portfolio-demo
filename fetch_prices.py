@@ -70,6 +70,24 @@ CRYPTO_SYMBOLS = {
 }
 
 
+def business_days_since(date_str):
+    """Count business days (Mon-Fri) between date_str and today."""
+    try:
+        start = datetime.date.fromisoformat(date_str)
+        end   = datetime.date.fromisoformat(TODAY)
+        if end <= start:
+            return 0
+        days = 0
+        cur = start + datetime.timedelta(days=1)
+        while cur <= end:
+            if cur.weekday() < 5:  # 0=Mon ... 4=Fri
+                days += 1
+            cur += datetime.timedelta(days=1)
+        return days
+    except Exception:
+        return 99
+
+
 def yahoo_search_symbol(query):
     """Search Yahoo Finance for a ticker by ISIN or name."""
     try:
@@ -296,7 +314,10 @@ def main(pension_value=None):
 
     account_lines = []
     for acc2 in d["accounts"]:
+        acc_label2 = f"{acc2.get('holder','')} {acc2.get('wrapper', acc2.get('id','?'))}"
         acc_val = sum(hval(h2) for h2 in acc2["holdings"])
+        if not acc_val:
+            continue  # skip empty accounts
         if prev_total is not None:
             prev_hist2 = [e for e in d["history"] if e["date"] == d["meta"]["prevDate"]]
             prev_snap2 = prev_hist2[0].get("prices", {}) if prev_hist2 else {}
@@ -308,9 +329,9 @@ def main(pension_value=None):
                     acc_prev += h2["units"] * prev_snap2[key2] if h2.get("units") is not None else prev_snap2[key2]
             chg = acc_val - acc_prev
             sign = "+" if chg >= 0 else "-"
-            account_lines.append(f"  {acc2.get('name','Account'):30}  £{acc_val:>10,.0f}  ({sign}£{abs(chg):,.0f})")
+            account_lines.append(f"  {acc_label2:30}  £{acc_val:>10,.0f}  ({sign}£{abs(chg):,.0f})")
         else:
-            account_lines.append(f"  {acc2.get('name','Account'):30}  £{acc_val:>10,.0f}")
+            account_lines.append(f"  {acc_label2:30}  £{acc_val:>10,.0f}")
 
     overall_change = f"+£{total_value - prev_total:,.0f}" if prev_total is not None and total_value >= prev_total else (f"-£{prev_total - total_value:,.0f}" if prev_total is not None else "n/a")
 
@@ -322,16 +343,88 @@ def main(pension_value=None):
     print(f"  {'✓':3} Saved → {JSON_PATH.name}")
     print(f"{'─'*60}\n")
 
-    # Structured summary for GitHub Actions email (parse via marker)
+    # ── Build per-holding detail rows for email ──────────────────────────────
+    stale_warnings = []
+    holding_rows   = []
+    for acc in d["accounts"]:
+        acc_label = f"{acc.get('holder','')} {acc.get('wrapper', acc.get('id','?'))}"
+        for h in acc["holdings"]:
+            name      = h.get("name", "?")
+            is_manual = h.get("pensionTracking") or h.get("ticker") is None
+            price     = h.get("price")
+            pd        = h.get("priceDate", "?")
+            val       = hval(h)
+            val_str   = f"£{val:>10,.0f}" if val else "          —"
+            if is_manual:
+                bdays = business_days_since(pd) if pd and pd != "?" else 99
+                price_str = f"manual    {pd or '?':10s}"
+                flag = "  ⚑ manual entry" + (f" — CHECK: {bdays}bd since last update" if bdays > 5 else "")
+                if bdays > 5:
+                    stale_warnings.append((acc_label, name, pd, bdays, "manual"))
+            elif price is None:
+                bdays = business_days_since(pd) if pd and pd != "?" else 99
+                price_str = f"    —     {pd or '?':10s}"
+                flag = f"  ⚠ NO PRICE ({bdays}bd old)"
+                stale_warnings.append((acc_label, name, pd, bdays, "no price"))
+            else:
+                bdays = business_days_since(pd) if pd and pd != "?" else 0
+                price_str = f"£{price:>8.4f}  {pd:10s}"
+                # ETFs (LSE-listed) should update every business day; funds have 1bd lag
+                is_etf = h.get("ticker") in ("BCHS", "SWDA")
+                thresh = 1 if is_etf else 2
+                if bdays > thresh:
+                    flag = f"  ⚠ stale ({bdays}bd)"
+                    stale_warnings.append((acc_label, name, pd, bdays, "stale"))
+                else:
+                    flag = ""
+            holding_rows.append(
+                f"  {acc_label:28s}  {name:42s}  {price_str}  {val_str}{flag}"
+            )
+
+    # Crypto rows
+    for c in d.get("crypto", []):
+        pd    = c.get("priceDate", "?")
+        bdays = business_days_since(pd) if pd and pd != "?" else 0
+        val   = round(c["price"] * c["units"], 2) if c.get("price") and c.get("units") else None
+        val_str   = f"£{val:>10,.0f}" if val else "          —"
+        price_str = f"£{c['price']:>8.2f}  {pd:10s}"
+        flag = f"  ⚠ stale ({bdays}bd)" if bdays > 1 else ""
+        holding_rows.append(
+            f"  {'Crypto':28s}  {c.get('name','?'):42s}  {price_str}  {val_str}{flag}"
+        )
+
+    # ── Guardrail: large single-day move check ────────────────────────────────
+    guardrail_msg = ""
+    if prev_total and prev_total > 0:
+        pct_chg = (total_value - prev_total) / prev_total * 100
+        if abs(pct_chg) > 5:
+            guardrail_msg = f"\n⚠⚠  GUARDRAIL: Portfolio moved {pct_chg:+.1f}% since last update — please verify prices.  ⚠⚠"
+
+    # ── Structured summary for GitHub Actions email ───────────────────────────
     print("EMAIL_SUMMARY_START")
     print(f"Date: {TODAY_DISPLAY}")
     print(f"Total Portfolio: £{total_value:,.0f}  (since {prev_date_display or 'last'}: {overall_change})")
+    if guardrail_msg:
+        print(guardrail_msg)
     print("")
     print("Account Breakdown (since last update):")
     for line in account_lines:
         print(line)
     if failed:
-        print(f"\nNot updated: {', '.join(failed)}")
+        print(f"\n⚠ Fetch failed (price unchanged): {', '.join(failed)}")
+    if stale_warnings:
+        print(f"\n⚠ Stale / missing prices ({len(stale_warnings)} holdings):")
+        for acc_name, hname, hdate, bdays, reason in stale_warnings:
+            print(f"    {acc_name:28s}  {hname:42s}  last={hdate}  ({bdays} business days ago)  [{reason}]")
+        print("  Note: unit trust NAVs have a 1-business-day lag — 2bd is normal over a weekend.")
+    print("")
+    print(f"{'─'*110}")
+    print(f"  {'Account':28s}  {'Holding':42s}  {'Price':>8s}  {'Date':10s}  {'Value':>12s}")
+    print(f"{'─'*110}")
+    for row in holding_rows:
+        print(row)
+    print(f"{'─'*110}")
+    print(f"  {'':28s}  {'TOTAL':42s}  {'':8s}  {'':10s}  £{total_value:>10,.0f}")
     print("EMAIL_SUMMARY_END")
 
 
