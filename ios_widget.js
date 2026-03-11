@@ -35,7 +35,7 @@ async function fetchData() {
 // ── Calculate totals and top movers ──────────────────────────────────────────
 function calc(d) {
   let total = 0, prevTotal = 0
-  const movers = []
+  const tickerMap = {}
 
   for (const acc of d.accounts || []) {
     for (const h of acc.holdings || []) {
@@ -56,12 +56,16 @@ function calc(d) {
 
       const change = val - prevVal
       if (h.ticker && Math.abs(change) > 0.5) {
-        movers.push({ ticker: h.ticker, change, pct: prevVal > 0 ? change / prevVal : 0 })
+        if (!tickerMap[h.ticker]) tickerMap[h.ticker] = { ticker: h.ticker, change: 0, prevVal: 0 }
+        tickerMap[h.ticker].change  += change
+        tickerMap[h.ticker].prevVal += prevVal
       }
     }
   }
 
-  movers.sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
+  const movers = Object.values(tickerMap)
+    .map(m => ({ ticker: m.ticker, change: m.change, pct: m.prevVal > 0 ? m.change / m.prevVal : 0 }))
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
 
   return {
     total,
@@ -180,9 +184,16 @@ async function buildWidget(d) {
 
   hdr.addSpacer()
 
-  const ts = hdr.addText(fmtDateTime(meta.fetchTimestamp))
+  const rightHdr = hdr.addStack()
+  rightHdr.layoutVertically()
+
+  const ts = rightHdr.addText(fmtDateTime(meta.fetchTimestamp))
   ts.textColor = C.dim
   ts.font = Font.systemFont(8)
+
+  const vsLbl = rightHdr.addText("vs " + (meta.prevDateDisplay || "prev"))
+  vsLbl.textColor = C.muted
+  vsLbl.font = Font.systemFont(7)
 
   widget.addSpacer(3)
 
@@ -192,42 +203,32 @@ async function buildWidget(d) {
   tv.font = Font.boldSystemFont(24)
   tv.minimumScaleFactor = 0.6
 
-  widget.addSpacer(2)
+  widget.addSpacer(1)
 
   // ── Change row (green/red) ─────────────────────────────────────────────────
-  const cr = widget.addStack()
-  cr.layoutHorizontally()
-  cr.centerAlignContent()
-
-  const ct = cr.addText(arrow + " " + fmtFull(change) + "   " + fmtPct(pct))
+  const ct = widget.addText(arrow + " " + fmtFull(change) + "   " + fmtPct(pct))
   ct.textColor = col
   ct.font = Font.boldSystemFont(11)
   ct.minimumScaleFactor = 0.7
 
-  cr.addSpacer()
-
-  const cl = cr.addText("vs " + (meta.prevDateDisplay || "prev"))
-  cl.textColor = C.muted
-  cl.font = Font.systemFont(9)
-
-  widget.addSpacer(5)
+  widget.addSpacer(3)
 
   // ── Sparkline (last 30 days) ───────────────────────────────────────────────
-  const spark = buildSparkline(d.history || [], 300, 30, up)
+  const spark = buildSparkline(d.history || [], 300, 22, up)
   const sparkEl = widget.addImage(spark)
-  sparkEl.imageSize = new Size(300, 30)
+  sparkEl.imageSize = new Size(300, 22)
   sparkEl.resizable = false
 
-  widget.addSpacer(4)
+  widget.addSpacer(3)
 
-  // ── Top movers (4 in a 2×2 grid) ──────────────────────────────────────────
+  // ── Top movers (6 in a 3×2 grid) ──────────────────────────────────────────
   const ml = widget.addText("TOP MOVERS")
   ml.textColor = C.muted
   ml.font = Font.boldSystemFont(8)
 
-  widget.addSpacer(3)
+  widget.addSpacer(2)
 
-  const top = movers.slice(0, 4)
+  const top = movers.slice(0, 6)
   if (top.length === 0) {
     const nm = widget.addText("No movement data yet")
     nm.textColor = C.dim
@@ -263,7 +264,7 @@ async function buildWidget(d) {
       if (j === i && top.length > i + 1) row.addSpacer() // spacer between the two cells
     }
 
-    widget.addSpacer(3)
+    widget.addSpacer(2)
   }
 
   widget.addSpacer()

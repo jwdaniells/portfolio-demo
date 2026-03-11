@@ -95,7 +95,7 @@ function fmtDateTime(iso) {
 
 function calc(d) {
   let total = 0, prevTotal = 0
-  const movers = []
+  const tickerMap = {}
   for (const acc of d.accounts || []) {
     for (const h of acc.holdings || []) {
       let val, prevVal
@@ -107,11 +107,15 @@ function calc(d) {
       total += val; prevTotal += prevVal
       const change = val - prevVal
       if (h.ticker && Math.abs(change) > 0.5) {
-        movers.push({ ticker: h.ticker, change, pct: prevVal > 0 ? change/prevVal : 0 })
+        if (!tickerMap[h.ticker]) tickerMap[h.ticker] = { ticker: h.ticker, change: 0, prevVal: 0 }
+        tickerMap[h.ticker].change  += change
+        tickerMap[h.ticker].prevVal += prevVal
       }
     }
   }
-  movers.sort((a,b) => Math.abs(b.change) - Math.abs(a.change))
+  const movers = Object.values(tickerMap)
+    .map(m => ({ ticker: m.ticker, change: m.change, pct: m.prevVal > 0 ? m.change / m.prevVal : 0 }))
+    .sort((a,b) => Math.abs(b.change) - Math.abs(a.change))
   return { total, change: total-prevTotal, pct: prevTotal>0?(total-prevTotal)/prevTotal:0, movers }
 }
 
@@ -179,17 +183,17 @@ function render(d) {
   w.innerHTML = `
     <div class="row">
       <span class="header-label muted">Daniells Portfolio</span>
-      <span class="header-time dim">${fmtDateTime(meta.fetchTimestamp)}</span>
+      <div style="text-align:right">
+        <div class="header-time dim">${fmtDateTime(meta.fetchTimestamp)}</div>
+        <div style="font-size:7px;color:#6a7d8f">vs ${meta.prevDateDisplay||"prev"}</div>
+      </div>
     </div>
     <div class="total-value gold">${fmt(total)}</div>
-    <div class="row">
-      <span class="change-row ${col}">${arrow} ${fmtFull(change)}&nbsp;&nbsp;&nbsp;${fmtPct(pct)}</span>
-      <span class="vs-label muted">vs ${meta.prevDateDisplay||"prev"}</span>
-    </div>
+    <div class="change-row ${col}">${arrow} ${fmtFull(change)}&nbsp;&nbsp;&nbsp;${fmtPct(pct)}</div>
     <canvas id="spark" width="301" height="30"></canvas>
     <div class="section-label muted">Top Movers</div>
     <div class="movers-grid">
-    ${movers.slice(0,4).map(m => {
+    ${movers.slice(0,6).map(m => {
       const mc = m.change>=0?"green":"red"
       const ma = m.change>=0?"▲":"▼"
       return `<div class="mover-cell">
