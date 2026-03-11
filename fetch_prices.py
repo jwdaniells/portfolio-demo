@@ -213,7 +213,8 @@ def main(pension_value=None):
 
             if ticker and ticker in fetched:
                 new_price, price_date = fetched[ticker]
-                if is_new_day:
+                # Only roll prevPrice when we get a genuinely newer-dated price
+                if price_date != h.get("priceDate") and h.get("price") is not None:
                     h["prevPrice"] = h.get("price")
                 h["price"]       = new_price
                 h["priceDate"]   = price_date
@@ -253,8 +254,9 @@ def main(pension_value=None):
             cid = coin["id"].upper()   # btc → BTC
             if cid in crypto_fetched:
                 gbp, pdate, prev = crypto_fetched[cid]
-                if is_new_day:
-                    coin["prevPrice"] = coin.get("price")   # roll current → prev
+                # Only roll prevPrice when we get a genuinely newer-dated price
+                if pdate != coin.get("priceDate") and coin.get("price") is not None:
+                    coin["prevPrice"] = coin.get("price")
                 coin["price"]     = gbp
                 coin["priceDate"] = pdate
                 if prev is not None and coin["prevPrice"] is None:
