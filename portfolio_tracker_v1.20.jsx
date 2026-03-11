@@ -53,6 +53,8 @@ export default function PortfolioTracker() {
   const [cryptoEditCell,setCryptoEditCell] = useState(null);
   const [cryptoEditVal,setCryptoEditVal]   = useState("");
   const [analysis,setAnalysis]             = useState(null);
+  const [fetchState,setFetchState]         = useState(null); // null | "running" | "done" | "error"
+  const [analysisBusy,setAnalysisBusy]     = useState(false);
   const [charlieData,setCharlieData]       = useState({lsegPrice:null,lsegPriceDate:null,additionalSaved:0});
   const [charlieEditCell,setCharlieEditCell] = useState(null);
   const [charlieEditVal,setCharlieEditVal] = useState("");
@@ -119,6 +121,32 @@ export default function PortfolioTracker() {
     return wTotal>0 ? wAnn/wTotal : null;
   })();
 
+  const triggerFetch = async () => {
+    let pat = localStorage.getItem("portfolio_gh_pat");
+    if (!pat) {
+      pat = window.prompt("Enter your GitHub Personal Access Token\n(needs Actions: write scope on this repo):");
+      if (!pat) return;
+      localStorage.setItem("portfolio_gh_pat", pat.trim());
+    }
+    setFetchState("running");
+    try {
+      const res = await fetch(
+        "https://api.github.com/repos/jwdaniells/portfolio-tracker/actions/workflows/fetch-prices.yml/dispatches",
+        { method:"POST", headers:{Authorization:`Bearer ${pat.trim()}`,Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"}, body:JSON.stringify({ref:"main"}) }
+      );
+      if (res.status === 204) { setFetchState("done"); }
+      else if (res.status === 401) { localStorage.removeItem("portfolio_gh_pat"); setFetchState("error"); }
+      else { setFetchState("error"); }
+    } catch { setFetchState("error"); }
+    setTimeout(() => setFetchState(null), 5000);
+  };
+
+  const refreshAnalysis = async () => {
+    setAnalysisBusy(true);
+    try { const a = await fetch(`./analysis.json?v=${Date.now()}`).then(r=>r.ok?r.json():null); if(a) setAnalysis(a); } catch {}
+    setAnalysisBusy(false);
+  };
+
   const startEdit  = (k,v) => { setEditCell(k); setEditVal(v!=null?String(v):""); };
   const commitEdit = (aId,hId,field) => { const v=parseFloat(editVal),today=new Date().toISOString().slice(0,10); setData(d=>({...d,accounts:d.accounts.map(a=>{ if(a.id!==aId) return a; return {...a,holdings:a.holdings.map(h=>{ if(h.id!==hId) return h; const up={...h,[field]:isNaN(v)?null:v}; if(field==="price"||field==="manualValue") up.priceDate=today; return up; })}; })})); setEditCell(null); };
 
@@ -164,7 +192,8 @@ export default function PortfolioTracker() {
       <nav style={S.nav}>
         <div style={S.logo}>Daniells Portfolio</div>
         {[["dashboard","Dashboard"],["account","Accounts"],["allocation","Allocation"],["history","History"],["goal","Goal"],["analysis","Analysis"],["crypto","Crypto"],["charlie","Charlie Uni"]].map(([id,label])=>(<button key={id} style={S.tab(activeTab===id)} onClick={()=>{ setActiveTab(id); if(id!=="account") setSelectedAcc(null); }}>{label}</button>))}
-        <a href="./retirement.html" style={{marginLeft:"auto",color:"#6a7d8f",textDecoration:"none",fontSize:10,letterSpacing:"0.1em",padding:"14px 12px",borderBottom:"2px solid transparent",display:"flex",alignItems:"center",gap:4}} onMouseEnter={e=>e.currentTarget.style.color="#c9a84c"} onMouseLeave={e=>e.currentTarget.style.color="#6a7d8f"}>RETIREMENT PLANNER →</a>
+        <button onClick={triggerFetch} disabled={fetchState==="running"} style={{marginLeft:"auto",padding:"5px 14px",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",border:"1px solid",borderColor:fetchState==="done"?"#70AD47":fetchState==="error"?"#e07060":"#2a3d50",background:fetchState==="done"?"#70AD4718":fetchState==="error"?"#e0706018":"transparent",color:fetchState==="done"?"#70AD47":fetchState==="error"?"#e07060":"#6a7d8f",cursor:fetchState==="running"?"default":"pointer",borderRadius:2,fontFamily:"inherit",transition:"all 0.2s"}}>{fetchState==="running"?"↻ Fetching…":fetchState==="done"?"✓ Triggered":fetchState==="error"?"✗ Failed":"↻ Fetch Prices"}</button>
+        <a href="./retirement.html" style={{color:"#6a7d8f",textDecoration:"none",fontSize:10,letterSpacing:"0.1em",padding:"14px 12px",borderBottom:"2px solid transparent",display:"flex",alignItems:"center",gap:4}} onMouseEnter={e=>e.currentTarget.style.color="#c9a84c"} onMouseLeave={e=>e.currentTarget.style.color="#6a7d8f"}>RETIREMENT PLANNER →</a>
         <div style={S.ver}>{version}</div>
       </nav>
 
@@ -417,7 +446,7 @@ export default function PortfolioTracker() {
       })()}
 
       {activeTab==="analysis"&&(()=>{
-        if(!analysis) return (<div style={S.body}><div style={{...S.card,textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:14,color:"#6a7d8f",marginBottom:12}}>No analysis data available.</div><div style={{fontSize:12,color:"#4a6070"}}>Run <code style={{background:"#1e3040",padding:"2px 6px",borderRadius:2,fontFamily:"monospace",fontSize:11}}>python3 fetch_analysis.py</code> or double-click <code style={{background:"#1e3040",padding:"2px 6px",borderRadius:2,fontFamily:"monospace",fontSize:11}}>refresh_analysis.command</code> to generate analysis.</div></div></div>);
+        if(!analysis) return (<div style={S.body}><div style={{...S.card,textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:14,color:"#6a7d8f",marginBottom:12}}>No analysis data available.</div><div style={{fontSize:12,color:"#4a6070",marginBottom:16}}>Run <code style={{background:"#1e3040",padding:"2px 6px",borderRadius:2,fontFamily:"monospace",fontSize:11}}>python3 fetch_analysis.py</code> or double-click <code style={{background:"#1e3040",padding:"2px 6px",borderRadius:2,fontFamily:"monospace",fontSize:11}}>refresh_analysis.command</code> to generate analysis.</div><button onClick={refreshAnalysis} disabled={analysisBusy} style={{padding:"6px 18px",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",border:"1px solid #2a3d50",background:"transparent",color:analysisBusy?"#4a6070":"#6a7d8f",cursor:analysisBusy?"default":"pointer",borderRadius:2,fontFamily:"inherit"}}>{analysisBusy?"↻ Checking…":"↻ Reload Analysis"}</button></div></div>);
 
         const sm = analysis.summary;
         const holdings = analysis.holdings || [];
@@ -435,6 +464,11 @@ export default function PortfolioTracker() {
         const aheadOfReq = projRet != null && reqNow != null && projRet >= reqNow;
 
         return (<div style={S.body}>
+          {/* ── Analysis action row ── */}
+          <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",marginBottom:12,gap:12}}>
+            <span style={{fontSize:11,color:"#4a6070"}}>Analysis: {analysis.meta?.analysisDateDisplay||"—"}</span>
+            <button onClick={refreshAnalysis} disabled={analysisBusy} style={{padding:"5px 14px",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",border:"1px solid #2a3d50",background:"transparent",color:analysisBusy?"#4a6070":"#6a7d8f",cursor:analysisBusy?"default":"pointer",borderRadius:2,fontFamily:"inherit"}}>{analysisBusy?"↻ Refreshing…":"↻ Refresh Analysis"}</button>
+          </div>
           {/* ── Portfolio Outlook Summary ── */}
           <div style={{...S.card,borderColor:sm.onTrack?"#70AD4744":"#e0706044"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16}}>
