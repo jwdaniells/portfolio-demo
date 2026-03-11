@@ -130,8 +130,10 @@ export default function PortfolioTracker() {
     }
     setFetchState("running");
     try {
+      const _ghOwner = window.USER_CONFIG?.github?.owner || "jwdaniells";
+      const _ghRepo  = window.USER_CONFIG?.github?.repo  || "portfolio-tracker";
       const res = await fetch(
-        "https://api.github.com/repos/jwdaniells/portfolio-tracker/actions/workflows/fetch-prices.yml/dispatches",
+        `https://api.github.com/repos/${_ghOwner}/${_ghRepo}/actions/workflows/fetch-prices.yml/dispatches`,
         { method:"POST", headers:{Authorization:`Bearer ${pat.trim()}`,Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"}, body:JSON.stringify({ref:"main"}) }
       );
       if (res.status === 204) { setFetchState("done"); }
@@ -150,8 +152,10 @@ export default function PortfolioTracker() {
     }
     setAnalysisBusy("running");
     try {
+      const _ghOwner2 = window.USER_CONFIG?.github?.owner || "jwdaniells";
+      const _ghRepo2  = window.USER_CONFIG?.github?.repo  || "portfolio-tracker";
       const res = await fetch(
-        "https://api.github.com/repos/jwdaniells/portfolio-tracker/actions/workflows/fetch-analysis.yml/dispatches",
+        `https://api.github.com/repos/${_ghOwner2}/${_ghRepo2}/actions/workflows/fetch-analysis.yml/dispatches`,
         { method:"POST", headers:{Authorization:`Bearer ${pat.trim()}`,Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"}, body:JSON.stringify({ref:"main"}) }
       );
       if (res.status === 401) { localStorage.removeItem("portfolio_gh_pat"); setAnalysisBusy(null); return; }
@@ -272,15 +276,17 @@ export default function PortfolioTracker() {
       </div>)}
 
       {activeTab==="goal"&&(()=>{
-        const GOAL        = 1400000;
-        const BASELINE    = 857270;
-        const BASELINE_DT = new Date("2026-02-25");
-        const MONTHLY     = 2010.67;
-        const RATE_REQ    = 0.0790;
-        const RATE_PROJ   = 0.115;
-        const RATE_BEAR   = 0.06;
-        const RATE_BULL   = 0.17;
-        const JOHN_DOB    = new Date("1968-03-27");
+        const _uc        = window.USER_CONFIG || {};
+        const GOAL        = _uc.goal?.target         || 1400000;
+        const BASELINE    = _uc.goal?.baseline       || 857270;
+        const BASELINE_DT = new Date(_uc.goal?.baselineDate || "2026-02-25");
+        const MONTHLY     = _uc.goal?.monthlyContrib || 2010.67;
+        const RATE_REQ    = _uc.goal?.rateRequired   || 0.0790;
+        const RATE_PROJ   = _uc.goal?.rateProjected  || 0.115;
+        const RATE_BEAR   = _uc.goal?.rateBear       || 0.06;
+        const RATE_BULL   = _uc.goal?.rateBull       || 0.17;
+        const P1_DOB      = new Date(_uc.people?.person1?.dob || "1968-03-27");
+        const fmtBaseline = `${BASELINE_DT.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}`;
 
         const project = (start, rate, months, monthly) => {
           const mr = Math.pow(1 + rate, 1/12) - 1;
@@ -296,7 +302,7 @@ export default function PortfolioTracker() {
         const pts = Array.from({length: months}, (_, m) => {
           const dt = new Date(BASELINE_DT);
           dt.setMonth(dt.getMonth() + m);
-          const age = Math.floor((dt - JOHN_DOB) / (365.25*24*60*60*1000));
+          const age = Math.floor((dt - P1_DOB) / (365.25*24*60*60*1000));
           return {
             m, dt, age,
             yearLabel: m % 12 === 0 ? `${dt.getFullYear()}` : null,
@@ -368,11 +374,11 @@ export default function PortfolioTracker() {
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16}}>
               <div>
                 <div style={{fontSize:10,color:"#6a7d8f",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:6}}>Current Goal</div>
-                <div style={{fontSize:22,color:"#c9a84c",fontWeight:600}}>Reach £1,400,000 by February 2031</div>
-                <div style={{fontSize:12,color:"#6a7d8f",marginTop:4}}>Starting from £857,270 baseline (25 Feb 2026) · includes £2,011/month pension contributions</div>
+                <div style={{fontSize:22,color:"#c9a84c",fontWeight:600}}>Reach {fmt(GOAL)} by {fmtDate(estGoalDate) || "goal date"}</div>
+                <div style={{fontSize:12,color:"#6a7d8f",marginTop:4}}>Starting from {fmt(BASELINE)} baseline ({fmtBaseline}) · includes {fmt(MONTHLY)}/month pension contributions</div>
               </div>
               <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-                <div style={S.sBox}><div style={S.sLbl}>Required Rate</div><div style={{fontSize:22,color:"#c9a84c"}}>7.90% p.a.</div><div style={{fontSize:10,color:"#6a7d8f",marginTop:2}}>to hit goal incl. contributions</div></div>
+                <div style={S.sBox}><div style={S.sLbl}>Required Rate</div><div style={{fontSize:22,color:"#c9a84c"}}>{(RATE_REQ*100).toFixed(2)}% p.a.</div><div style={{fontSize:10,color:"#6a7d8f",marginTop:2}}>to hit goal incl. contributions</div></div>
                 <div style={{...S.sBox,borderColor:isAheadOfRequired?"#70AD4744":"#e0706044"}}>
                   <div style={S.sLbl}>Today vs Required Pace</div>
                   <div style={{fontSize:20,color:isAheadOfRequired?"#70AD47":"#e07060"}}>{isAheadOfRequired?"▲ Ahead":"▼ Behind"}</div>
@@ -384,7 +390,7 @@ export default function PortfolioTracker() {
           </div>
 
           <div style={S.card}>
-            <div style={S.sec}>5-Year Projection · from 25 Feb 2026 · includes £2,011/month pension contributions · actuals plotted as they accumulate</div>
+            <div style={S.sec}>5-Year Projection · from {fmtBaseline} · includes {fmt(MONTHLY)}/month pension contributions · actuals plotted as they accumulate</div>
             <div style={{display:"flex",gap:20,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
               {[
                 {label:`Bull (17%) → £${(val5Bull/1000).toFixed(0)}k`,      color:"#70AD47", dash:null,  w:1.5, dim:true},
@@ -455,7 +461,7 @@ export default function PortfolioTracker() {
                 const vProj = project(BASELINE, RATE_PROJ, y*12, MONTHLY);
                 const vBull = project(BASELINE, RATE_BULL, y*12, MONTHLY);
                 const dt = new Date(BASELINE_DT); dt.setFullYear(dt.getFullYear()+y);
-                const ageAtYr = Math.floor((dt - JOHN_DOB)/(365.25*24*60*60*1000));
+                const ageAtYr = Math.floor((dt - P1_DOB)/(365.25*24*60*60*1000));
                 const dtStr = dt.toLocaleDateString("en-GB",{month:"short",year:"numeric"});
                 return (
                   <tr key={y} onMouseEnter={e=>e.currentTarget.style.background="#1e3040"} onMouseLeave={e=>e.currentTarget.style.background=""}>
@@ -472,7 +478,7 @@ export default function PortfolioTracker() {
               })}</tbody>
             </table>
             <div style={{marginTop:12,fontSize:10,color:"#4a6070",lineHeight:1.7}}>
-              Projection basis: £857,270 baseline (25 Feb 2026) · £2,011/month pension contributions compounded monthly · Rates: Bear 6% / Required 7.90% / Projected 11.5% / Bull 17% annualised · "Projected" = weighted avg annualised return across all holdings, using 1yr market rates for BCHS (+40.3%) and HSBC Islamic (+13.7%), actual annualised returns for all other holdings · Actuals line plots real portfolio values from session history · Baseline projection lines are fixed and do not change — only the Actuals line grows over time
+              Projection basis: {fmt(BASELINE)} baseline ({fmtBaseline}) · {fmt(MONTHLY)}/month pension contributions compounded monthly · Rates: Bear {(RATE_BEAR*100).toFixed(0)}% / Required {(RATE_REQ*100).toFixed(2)}% / Projected {(RATE_PROJ*100).toFixed(1)}% / Bull {(RATE_BULL*100).toFixed(0)}% annualised · "Projected" = weighted avg annualised return across all holdings · Actuals line plots real portfolio values from session history · Baseline projection lines are fixed and do not change — only the Actuals line grows over time
             </div>
           </div>
         </div>);
@@ -755,11 +761,12 @@ export default function PortfolioTracker() {
         const UNI_START   = new Date("2028-09-01");
         const S1_MATURITY = new Date("2026-11-01");
         const S2_MATURITY = new Date("2028-11-01");
-        const S1_OPTIONS  = 168;
-        const S2_OPTIONS  = 100;
-        const MONTHLY_ACCOM = 600;  // accommodation
-        const MONTHLY_MAINT = 200;  // extra maintenance
-        const MONTHLY_TOTAL = MONTHLY_ACCOM + MONTHLY_MAINT; // £800/month total
+        const _cuc = window.USER_CONFIG?.charlieUni || {};
+        const S1_OPTIONS  = _cuc.s1Options    || 168;
+        const S2_OPTIONS  = _cuc.s2Options    || 100;
+        const MONTHLY_ACCOM = _cuc.monthlyAccom || 600;  // accommodation
+        const MONTHLY_MAINT = _cuc.monthlyMaint || 200;  // extra maintenance
+        const MONTHLY_TOTAL = MONTHLY_ACCOM + MONTHLY_MAINT;
         const THREE_YR_COST = 10 * 3 * MONTHLY_TOTAL; // 10 months/year × 3 years × £800 = £24,000
         const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
         const monthsToUni = Math.max(0, (UNI_START   - TODAY_DT) / msPerMonth);
@@ -800,7 +807,7 @@ export default function PortfolioTracker() {
           bal -= MONTHLY_TOTAL;
         }
 
-        const PB_ANNUAL  = 0.044; // Premium Bonds ~4.4% p.a. prize equivalent (not guaranteed)
+        const PB_ANNUAL  = _cuc.pbAnnualRate || 0.044; // Premium Bonds prize equivalent (not guaranteed)
         const PB_MONTHLY = Math.pow(1 + PB_ANNUAL, 1/12) - 1; // ~0.359%/month
         const S1_PB_START = new Date("2026-12-01"); // Dec 2026: 1 month after maturity to transfer into ISA & sell
         const s1PbMonths = Math.round(Math.max(0,(UNI_START - S1_PB_START)/msPerMonth)); // ~21 months

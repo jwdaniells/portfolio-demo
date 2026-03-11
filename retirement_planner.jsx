@@ -1,5 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 
+// ─── Config Loading ──────────────────────────────────────────────────────────
+const _UC = window.USER_CONFIG || {};
+const p1Name = _UC.people?.person1?.name || "Person 1";
+const p2Name = _UC.people?.person2?.name || "Person 2";
+
 // ─── Formatters ─────────────────────────────────────────────────────────────
 const fmt   = (n,d=0) => { if(n==null||isNaN(n)) return "—"; return new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP",minimumFractionDigits:d,maximumFractionDigits:d}).format(n); };
 const fmtN  = (n,d=0) => { if(n==null||isNaN(n)) return "—"; return new Intl.NumberFormat("en-GB",{minimumFractionDigits:d,maximumFractionDigits:d}).format(n); };
@@ -42,129 +47,131 @@ function calcIncomeTax(gross) {
   return { tax: Math.round(tax), net: Math.round(net), effectiveRate, marginalRate, pa };
 }
 
-// Optimise drawdown split between John and Elaine to minimise total tax
+// Optimise drawdown split between Person 1 and Person 2 to minimise total tax
 // given their respective guaranteed incomes (non-portfolio)
-function optimiseDrawdown(johnGuaranteed, elaineGuaranteed, targetNet, maxJohnSipp, maxElaineSipp, totalIsa) {
-  // Try many splits: John gets x% of SIPP drawdown, Elaine gets (100-x)%
+function optimiseDrawdown(p1Guaranteed, p2Guaranteed, targetNet, maxP1Sipp, maxP2Sipp, totalIsa) {
+  // Try many splits: P1 gets x% of SIPP drawdown, P2 gets (100-x)%
   // ISA drawn last (tax-free)
   let bestTax = Infinity, bestSplit = null;
   for (let jp = 0; jp <= 100; jp += 1) {
     const ep = 100 - jp;
     // Binary search for gross total SIPP needed
-    let lo = 0, hi = maxJohnSipp + maxElaineSipp + totalIsa;
+    let lo = 0, hi = maxP1Sipp + maxP2Sipp + totalIsa;
     for (let iter = 0; iter < 50; iter++) {
       const mid = (lo + hi) / 2;
       // ISA first or SIPP first? Strategy: SIPP first (taxable), ISA to top up
-      const sippDraw = Math.min(mid, maxJohnSipp + maxElaineSipp);
+      const sippDraw = Math.min(mid, maxP1Sipp + maxP2Sipp);
       const isaDraw = Math.max(0, mid - sippDraw);
-      const johnSipp = Math.min(sippDraw * jp / 100, maxJohnSipp);
-      const elaineSipp = Math.min(sippDraw - johnSipp, maxElaineSipp);
-      const johnGross = johnGuaranteed + johnSipp;
-      const elaineGross = elaineGuaranteed + elaineSipp;
-      const johnTax = calcIncomeTax(johnGross);
-      const elaineTax = calcIncomeTax(elaineGross);
-      const netTotal = johnTax.net + elaineTax.net + isaDraw;
+      const p1Sipp = Math.min(sippDraw * jp / 100, maxP1Sipp);
+      const p2Sipp = Math.min(sippDraw - p1Sipp, maxP2Sipp);
+      const p1Gross = p1Guaranteed + p1Sipp;
+      const p2Gross = p2Guaranteed + p2Sipp;
+      const p1Tax = calcIncomeTax(p1Gross);
+      const p2Tax = calcIncomeTax(p2Gross);
+      const netTotal = p1Tax.net + p2Tax.net + isaDraw;
       if (netTotal < targetNet) lo = mid; else hi = mid;
     }
     const totalDraw = (lo + hi) / 2;
-    const sippDraw = Math.min(totalDraw, maxJohnSipp + maxElaineSipp);
+    const sippDraw = Math.min(totalDraw, maxP1Sipp + maxP2Sipp);
     const isaDraw = Math.max(0, totalDraw - sippDraw);
-    const johnSipp = Math.min(sippDraw * jp / 100, maxJohnSipp);
-    const elaineSipp = Math.min(sippDraw - johnSipp, maxElaineSipp);
-    const johnGross = johnGuaranteed + johnSipp;
-    const elaineGross = elaineGuaranteed + elaineSipp;
-    const jTax = calcIncomeTax(johnGross);
-    const eTax = calcIncomeTax(elaineGross);
+    const p1Sipp = Math.min(sippDraw * jp / 100, maxP1Sipp);
+    const p2Sipp = Math.min(sippDraw - p1Sipp, maxP2Sipp);
+    const p1Gross = p1Guaranteed + p1Sipp;
+    const p2Gross = p2Guaranteed + p2Sipp;
+    const jTax = calcIncomeTax(p1Gross);
+    const eTax = calcIncomeTax(p2Gross);
     const netTotal = jTax.net + eTax.net + isaDraw;
     const totalTax = jTax.tax + eTax.tax;
     if (Math.abs(netTotal - targetNet) < 200 && totalTax < bestTax) {
       bestTax = totalTax;
       bestSplit = {
-        johnSippDraw: Math.round(johnSipp),
-        elaineSippDraw: Math.round(elaineSipp),
+        p1SippDraw: Math.round(p1Sipp),
+        p2SippDraw: Math.round(p2Sipp),
         isaDraw: Math.round(isaDraw),
-        johnGross: Math.round(johnGross),
-        elaineGross: Math.round(elaineGross),
-        johnTax: jTax,
-        elaineTax: eTax,
+        p1Gross: Math.round(p1Gross),
+        p2Gross: Math.round(p2Gross),
+        p1Tax: jTax,
+        p2Tax: eTax,
         totalTax: Math.round(totalTax),
-        totalGross: Math.round(johnGross + elaineGross + isaDraw),
+        totalGross: Math.round(p1Gross + p2Gross + isaDraw),
         totalNet: Math.round(jTax.net + eTax.net + isaDraw),
-        totalFromPortfolio: Math.round(johnSipp + elaineSipp + isaDraw),
+        totalFromPortfolio: Math.round(p1Sipp + p2Sipp + isaDraw),
       };
     }
   }
   return bestSplit;
 }
 
-// ─── Default Assumptions ────────────────────────────────────────────────────
+// ─── Default Assumptions (loaded from user_config.json) ─────────────────────
+const _ret = _UC.retirement || {};
+const _p1r = _ret.person1 || {};
+const _p2r = _ret.person2 || {};
 const DEFAULTS = {
   // People
-  johnDOB: "1968-03-27",
-  elaineDOB: "1971-02-26",
-  retireYear: 2031,       // March 2031
+  p1Dob: _UC.people?.person1?.dob || "1968-03-27",
+  p2Dob: _UC.people?.person2?.dob || "1971-02-26",
+  retireYear: _ret.retireYear || 2031,
 
   // Portfolio (read from tracker or default)
-  johnSipp: 681968,
-  elaineSipp: 115680,
-  johnIsa: 18635,
-  elaineIsa: 24929,
-  lsegPension: 13120,
+  p1Sipp: _p1r.sipp || 681968,
+  p2Sipp: _p2r.sipp || 115680,
+  p1Isa: _p1r.isa || 18635,
+  p2Isa: _p2r.isa || 24929,
+  lsegPension: _ret.lsegPension || 13120,
 
   // Monthly contributions until retirement
-  monthlyContrib: 2011,   // combined
-  contribGrowth: 0.05,    // nominal growth on contributions
+  monthlyContrib: _ret.monthlyContrib || 2011,
+  contribGrowth: _ret.contribGrowth || 0.05,
 
   // DB Pensions
-  dbPensions: [
-    { owner: "John",   name: "Atkins",      annual: 5000, startAge: 65, indexed: false },
-    { owner: "John",   name: "Pfizer",      annual: 2500, startAge: 65, indexed: false },
-    { owner: "Elaine", name: "Disney",      annual: 1237, startAge: 65, indexed: false },
-    { owner: "Elaine", name: "Nippon Life",  annual: 135,  startAge: 65, indexed: false },
+  dbPensions: _ret.dbPensions || [
+    { owner: "person1", name: "Atkins",      annual: 5000, startAge: 65, indexed: false },
+    { owner: "person1", name: "Pfizer",      annual: 2500, startAge: 65, indexed: false },
+    { owner: "person2", name: "Disney",      annual: 1237, startAge: 65, indexed: false },
+    { owner: "person2", name: "Nippon Life", annual: 135,  startAge: 65, indexed: false },
   ],
 
-  // State Pensions (2025/26 full amount)
-  statePension: 11502,
-  johnSpAge: 67,
-  elaineSpAge: 67,
+  // State Pensions
+  statePension: _ret.statePension || 11502,
+  p1SpAge: _p1r.spAge || 67,
+  p2SpAge: _p2r.spAge || 67,
 
-  // Mortgage (£1,600/month — paid ON TOP of living costs until cleared)
-  mortgageBalance: 250000,
-  mortgageClearAge: 67,    // John's age when mortgage cleared via PCLS
-  mortgageAnnualCost: 19200, // £1,600/month
-  usePclsForMortgage: true,
+  // Mortgage
+  mortgageBalance: _ret.mortgageBalance || 250000,
+  mortgageClearAge: _ret.mortgageClearAge || 67,
+  mortgageAnnualCost: _ret.mortgageAnnualCost || 19200,
+  usePclsForMortgage: _ret.usePclsForMortgage ?? true,
 
-  // Target income (net, after tax)
-  targetNetIncome: 60000,   // base retirement income (post-mortgage)
-  elainePartTime: 4800,     // until retirement
-  inflationRate: 0.025,
+  // Target income
+  targetNetIncome: _ret.targetNetIncome || 60000,
+  p2PartTime: _p2r.partTimeIncome || 4800,
+  inflationRate: _ret.inflationRate || 0.025,
 
-  // Stepped income reductions in later life (% reduction from base target)
-  // These reflect lower activity, travel, discretionary spend
-  incomeSteps: [
+  // Income step-downs
+  incomeSteps: _ret.incomeSteps || [
     { fromAge: 75, reduction: 0.10, label: "Age 75 — less travel & activity" },
     { fromAge: 80, reduction: 0.15, label: "Age 80 — more home-based lifestyle" },
     { fromAge: 85, reduction: 0.20, label: "Age 85 — lower discretionary spend" },
   ],
 
-  // Growth scenarios (real, after inflation)
-  scenarioBear: 0.03,
-  scenarioCentral: 0.05,
-  scenarioBull: 0.07,
+  // Growth scenarios
+  scenarioBear: _ret.scenarioBear || 0.03,
+  scenarioCentral: _ret.scenarioCentral || 0.05,
+  scenarioBull: _ret.scenarioBull || 0.07,
 
   // Longevity
-  planToAge: 95,
+  planToAge: _ret.planToAge || 95,
 
-  // IHT / Estate Planning
-  houseValue: 1200000,        // current market value
-  houseGrowthRate: 0.03,      // conservative 3% nominal (below long-term UK avg)
-  mortgageNow: 350000,        // current total mortgage balance
-  mortgageRepaymentPortion: 100000, // portion on repayment (rest is interest-only)
-  mortgageClearAgeIHT: 67,    // age when remaining mortgage paid off (synced with main mortgage)
-  ihtNrb: 325000,             // Nil-Rate Band per person
-  ihtRnrb: 175000,            // Residence Nil-Rate Band per person (main home to direct descendants)
-  ihtRate: 0.40,              // 40% on excess above threshold
-  ihtRnrbTaperStart: 2000000, // RNRB tapers by £1 per £2 above this
+  // IHT / Estate
+  houseValue: _ret.houseValue || 1200000,
+  houseGrowthRate: _ret.houseGrowthRate || 0.03,
+  mortgageNow: _ret.mortgageNow || 350000,
+  mortgageRepaymentPortion: _ret.mortgageRepaymentPortion || 100000,
+  mortgageClearAgeIHT: _ret.mortgageClearAgeIHT || 67,
+  ihtNrb: _ret.ihtNrb || 325000,
+  ihtRnrb: _ret.ihtRnrb || 175000,
+  ihtRate: _ret.ihtRate || 0.40,
+  ihtRnrbTaperStart: _ret.ihtRnrbTaperStart || 2000000,
 };
 
 // ─── Main Component ─────────────────────────────────────────────────────────
@@ -189,12 +196,19 @@ export default function RetirementPlanner() {
             return s + (h.units || 0) * (h.price || 0);
           }, 0);
         };
+        // Account IDs from config
+        const accts = _UC.accounts || [];
+        const p1SippId = accts.find(a => a.person === "person1" && a.type === "SIPP")?.id || "person1-sipp";
+        const p2SippId = accts.find(a => a.person === "person2" && a.type === "SIPP")?.id || "person2-sipp";
+        const p1IsaId  = accts.find(a => a.person === "person1" && a.type === "ISA")?.id || "person1-isa";
+        const p2IsaId  = accts.find(a => a.person === "person2" && a.type === "ISA")?.id || "person2-isa";
+        const p1WorkId = accts.find(a => a.person === "person1" && a.type === "Workplace Pension")?.id || "person1-pension";
         const live = {
-          johnSipp: Math.round(accVal("john-sipp")),
-          elaineSipp: Math.round(accVal("elaine-sipp")),
-          johnIsa: Math.round(accVal("john-isa")),
-          elaineIsa: Math.round(accVal("elaine-isa")),
-          lsegPension: Math.round(accVal("john-pension")),
+          p1Sipp: Math.round(accVal(p1SippId)),
+          p2Sipp: Math.round(accVal(p2SippId)),
+          p1Isa: Math.round(accVal(p1IsaId)),
+          p2Isa: Math.round(accVal(p2IsaId)),
+          lsegPension: Math.round(accVal(p1WorkId)),
         };
         setLivePortfolio(live);
         setCfg(c => ({ ...c, ...live }));
@@ -205,11 +219,11 @@ export default function RetirementPlanner() {
 
   // ─── Projection Engine ──────────────────────────────────────────────────
   const projection = useMemo(() => {
-    const johnBirthYear = parseInt(cfg.johnDOB.split("-")[0]);
-    const elaineBirthYear = parseInt(cfg.elaineDOB.split("-")[0]);
+    const p1BirthYear = parseInt(cfg.p1Dob.split("-")[0]);
+    const p2BirthYear = parseInt(cfg.p2Dob.split("-")[0]);
     const retireYear = cfg.retireYear;
-    const retireAgeJohn = retireYear - johnBirthYear;
-    const retireAgeElaine = retireYear - elaineBirthYear;
+    const retireAgeP1 = retireYear - p1BirthYear;
+    const retireAgeP2 = retireYear - p2BirthYear;
 
     const rates = {
       bear: cfg.scenarioBear,
@@ -223,28 +237,28 @@ export default function RetirementPlanner() {
       // Starting values — grow to retirement with contributions
       const yearsToRetire = retireYear - 2026;
       const preRetireGrowth = 1 + (realRate + cfg.inflationRate); // nominal growth pre-retire
-      let johnSipp = cfg.johnSipp;
-      let elaineSipp = cfg.elaineSipp;
-      let johnIsa = cfg.johnIsa;
-      let elaineIsa = cfg.elaineIsa;
+      let p1Sipp = cfg.p1Sipp;
+      let p2Sipp = cfg.p2Sipp;
+      let p1Isa = cfg.p1Isa;
+      let p2Isa = cfg.p2Isa;
       let lsegPension = cfg.lsegPension;
 
-      // Grow portfolios to retirement (contributions go 70% John SIPP, 20% Elaine SIPP, 10% ISAs)
+      // Grow portfolios to retirement (contributions go 70% P1 SIPP, 20% P2 SIPP, 10% ISAs)
       for (let y = 0; y < yearsToRetire; y++) {
         const contrib = cfg.monthlyContrib * 12;
-        johnSipp = johnSipp * preRetireGrowth + contrib * 0.70;
-        elaineSipp = elaineSipp * preRetireGrowth + contrib * 0.20;
-        johnIsa = johnIsa * preRetireGrowth + contrib * 0.05;
-        elaineIsa = elaineIsa * preRetireGrowth + contrib * 0.05;
+        p1Sipp = p1Sipp * preRetireGrowth + contrib * 0.70;
+        p2Sipp = p2Sipp * preRetireGrowth + contrib * 0.20;
+        p1Isa = p1Isa * preRetireGrowth + contrib * 0.05;
+        p2Isa = p2Isa * preRetireGrowth + contrib * 0.05;
         lsegPension = lsegPension * preRetireGrowth;
       }
 
-      const totalAtRetirement = johnSipp + elaineSipp + johnIsa + elaineIsa + lsegPension;
+      const totalAtRetirement = p1Sipp + p2Sipp + p1Isa + p2Isa + lsegPension;
 
       // PCLS (25% tax-free from SIPPs)
-      const johnPcls = johnSipp * 0.25;
-      const elainePcls = elaineSipp * 0.25;
-      const totalPcls = johnPcls + elainePcls;
+      const p1Pcls = p1Sipp * 0.25;
+      const p2Pcls = p2Sipp * 0.25;
+      const totalPcls = p1Pcls + p2Pcls;
       let pclsTaken = false;
       let mortgagePaid = false;
 
@@ -253,9 +267,9 @@ export default function RetirementPlanner() {
       let inflationFactor = 1; // cumulative from retirement
 
       // Year-by-year from retirement
-      for (let yr = retireYear; yr <= johnBirthYear + cfg.planToAge; yr++) {
-        const johnAge = yr - johnBirthYear;
-        const elaineAge = yr - elaineBirthYear;
+      for (let yr = retireYear; yr <= p1BirthYear + cfg.planToAge; yr++) {
+        const p1Age = yr - p1BirthYear;
+        const p2Age = yr - p2BirthYear;
         const yearIdx = yr - retireYear;
 
         inflationFactor = Math.pow(1 + cfg.inflationRate, yearIdx);
@@ -266,7 +280,7 @@ export default function RetirementPlanner() {
 
         // Apply stepped reductions for later life
         for (const step of [...(cfg.incomeSteps || [])].sort((a, b) => b.fromAge - a.fromAge)) {
-          if (johnAge >= step.fromAge) {
+          if (p1Age >= step.fromAge) {
             baseTarget = cfg.targetNetIncome * (1 - step.reduction);
             break;
           }
@@ -277,41 +291,41 @@ export default function RetirementPlanner() {
         const targetNet = Math.round(baseTarget + mortgageTopUp);
 
         // Guaranteed income this year
-        let johnGuaranteed = 0;
-        let elaineGuaranteed = 0;
+        let p1Guaranteed = 0;
+        let p2Guaranteed = 0;
 
         // DB pensions (constant — not inflation-indexed)
         for (const db of cfg.dbPensions) {
-          const ownerAge = db.owner === "John" ? johnAge : elaineAge;
+          const ownerAge = db.owner === "person1" ? p1Age : p2Age;
           if (ownerAge >= db.startAge) {
-            if (db.owner === "John") johnGuaranteed += db.annual;
-            else elaineGuaranteed += db.annual;
+            if (db.owner === "person1") p1Guaranteed += db.annual;
+            else p2Guaranteed += db.annual;
           }
         }
 
         // State pensions (shown in today's money)
-        if (johnAge >= cfg.johnSpAge) {
-          johnGuaranteed += cfg.statePension;
+        if (p1Age >= cfg.p1SpAge) {
+          p1Guaranteed += cfg.statePension;
         }
-        if (elaineAge >= cfg.elaineSpAge) {
-          elaineGuaranteed += cfg.statePension;
+        if (p2Age >= cfg.p2SpAge) {
+          p2Guaranteed += cfg.statePension;
         }
 
-        // LSEG pension — add to John's guaranteed from retirement
+        // LSEG pension — add to P1's guaranteed from retirement
         if (yearIdx >= 0) {
-          johnGuaranteed += Math.round(lsegPension * 0.05); // ~5% annuity equivalent
+          p1Guaranteed += Math.round(lsegPension * 0.05); // ~5% annuity equivalent
         }
 
-        // Elaine's part-time income (only pre-retirement, already covered)
-        const totalGuaranteed = johnGuaranteed + elaineGuaranteed;
+        // P2's part-time income (only pre-retirement, already covered)
+        const totalGuaranteed = p1Guaranteed + p2Guaranteed;
 
         // Mortgage event
         let mortgageEvent = 0;
         let pclsEvent = 0;
-        if (cfg.usePclsForMortgage && johnAge === cfg.mortgageClearAge && !pclsTaken) {
+        if (cfg.usePclsForMortgage && p1Age === cfg.mortgageClearAge && !pclsTaken) {
           pclsEvent = totalPcls;
-          johnSipp -= johnPcls;
-          elaineSipp -= elainePcls;
+          p1Sipp -= p1Pcls;
+          p2Sipp -= p2Pcls;
           mortgageEvent = cfg.mortgageBalance;
           pclsTaken = true;
           mortgagePaid = true;
@@ -321,12 +335,12 @@ export default function RetirementPlanner() {
         const incomeNeeded = targetNet;
 
         // Optimise drawdown split
-        const totalIsa = johnIsa + elaineIsa;
+        const totalIsa = p1Isa + p2Isa;
         const drawdown = optimiseDrawdown(
-          johnGuaranteed, elaineGuaranteed,
+          p1Guaranteed, p2Guaranteed,
           incomeNeeded,
-          Math.max(0, johnSipp),
-          Math.max(0, elaineSipp),
+          Math.max(0, p1Sipp),
+          Math.max(0, p2Sipp),
           Math.max(0, totalIsa)
         );
 
@@ -336,34 +350,34 @@ export default function RetirementPlanner() {
 
         // Subtract drawdown from accounts
         if (drawdown) {
-          johnSipp = Math.max(0, johnSipp - drawdown.johnSippDraw);
-          elaineSipp = Math.max(0, elaineSipp - drawdown.elaineSippDraw);
+          p1Sipp = Math.max(0, p1Sipp - drawdown.p1SippDraw);
+          p2Sipp = Math.max(0, p2Sipp - drawdown.p2SippDraw);
           // ISA draw split proportionally
           if (drawdown.isaDraw > 0 && totalIsa > 0) {
-            const isaRatio = johnIsa / totalIsa;
-            johnIsa = Math.max(0, johnIsa - drawdown.isaDraw * isaRatio);
-            elaineIsa = Math.max(0, elaineIsa - drawdown.isaDraw * (1 - isaRatio));
+            const isaRatio = p1Isa / totalIsa;
+            p1Isa = Math.max(0, p1Isa - drawdown.isaDraw * isaRatio);
+            p2Isa = Math.max(0, p2Isa - drawdown.isaDraw * (1 - isaRatio));
           }
         }
 
         // Apply growth to remaining balances
-        johnSipp *= nominalGrowth;
-        elaineSipp *= nominalGrowth;
-        johnIsa *= nominalGrowth;
-        elaineIsa *= nominalGrowth;
+        p1Sipp *= nominalGrowth;
+        p2Sipp *= nominalGrowth;
+        p1Isa *= nominalGrowth;
+        p2Isa *= nominalGrowth;
 
-        const totalPortfolio = johnSipp + elaineSipp + johnIsa + elaineIsa;
+        const totalPortfolio = p1Sipp + p2Sipp + p1Isa + p2Isa;
         const exhausted = totalPortfolio <= 0;
 
         years.push({
           year: yr,
-          johnAge, elaineAge,
+          p1Age, p2Age,
           totalPortfolio: Math.round(totalPortfolio),
-          johnSipp: Math.round(johnSipp),
-          elaineSipp: Math.round(elaineSipp),
-          johnIsa: Math.round(johnIsa),
-          elaineIsa: Math.round(elaineIsa),
-          johnGuaranteed, elaineGuaranteed,
+          p1Sipp: Math.round(p1Sipp),
+          p2Sipp: Math.round(p2Sipp),
+          p1Isa: Math.round(p1Isa),
+          p2Isa: Math.round(p2Isa),
+          p1Guaranteed, p2Guaranteed,
           totalGuaranteed,
           incomeNeeded,
           portfolioDraw: Math.round(portfolioDraw),
@@ -380,9 +394,9 @@ export default function RetirementPlanner() {
 
       // Summary
       const lastYear = years[years.length - 1];
-      const exhaustionAge = lastYear.exhausted ? lastYear.johnAge : null;
-      const portfolioAt80 = years.find(y => y.johnAge === 80);
-      const portfolioAt90 = years.find(y => y.johnAge === 90);
+      const exhaustionAge = lastYear.exhausted ? lastYear.p1Age : null;
+      const portfolioAt80 = years.find(y => y.p1Age === 80);
+      const portfolioAt90 = years.find(y => y.p1Age === 90);
 
       results[scName] = {
         years,
@@ -399,8 +413,8 @@ export default function RetirementPlanner() {
 
   // ─── IHT Projection Engine ────────────────────────────────────────────────
   const ihtProjection = useMemo(() => {
-    const johnBirthYear = parseInt(cfg.johnDOB.split("-")[0]);
-    const currentAge = new Date().getFullYear() - johnBirthYear;
+    const p1BirthYear = parseInt(cfg.p1Dob.split("-")[0]);
+    const currentAge = new Date().getFullYear() - p1BirthYear;
     const yearsRepayment = cfg.mortgageClearAgeIHT - currentAge; // years until mortgage clear
     const repaymentPerYear = yearsRepayment > 0 ? cfg.mortgageRepaymentPortion / yearsRepayment : 0;
     const interestOnlyPortion = cfg.mortgageNow - cfg.mortgageRepaymentPortion;
@@ -411,7 +425,7 @@ export default function RetirementPlanner() {
       const years = [];
 
       // Pre-retirement years (from current age to retirement)
-      for (let age = currentAge; age < (cfg.retireYear - johnBirthYear); age++) {
+      for (let age = currentAge; age < (cfg.retireYear - p1BirthYear); age++) {
         const yearsFromNow = age - currentAge;
         const houseVal = Math.round(cfg.houseValue * Math.pow(1 + cfg.houseGrowthRate, yearsFromNow));
 
@@ -426,12 +440,12 @@ export default function RetirementPlanner() {
 
         // Portfolio: split SIPP and ISA — apply 2027 SIPP IHT rule
         // From 6 April 2027 SIPPs form part of the taxable estate; before that date they are outside.
-        const sippNow = cfg.johnSipp + cfg.elaineSipp + cfg.lsegPension;
-        const isaNow  = cfg.johnIsa + cfg.elaineIsa;
+        const sippNow = cfg.p1Sipp + cfg.p2Sipp + cfg.lsegPension;
+        const isaNow  = cfg.p1Isa + cfg.p2Isa;
         const nomRate = 1 + (scName === "bear" ? cfg.scenarioBear : scName === "central" ? cfg.scenarioCentral : cfg.scenarioBull) + cfg.inflationRate;
         const sippVal = Math.round(sippNow * Math.pow(nomRate, yearsFromNow));
         const isaVal  = Math.round(isaNow  * Math.pow(nomRate, yearsFromNow));
-        const sippsInEstate = (johnBirthYear + age) >= 2027;
+        const sippsInEstate = (p1BirthYear + age) >= 2027;
         const portfolioVal  = sippsInEstate ? sippVal + isaVal : isaVal;
 
         const grossEstate = portfolioVal + houseVal;
@@ -450,8 +464,8 @@ export default function RetirementPlanner() {
         const ihtDue = Math.round(taxableEstate * cfg.ihtRate);
 
         years.push({
-          year: johnBirthYear + age,
-          johnAge: age,
+          year: p1BirthYear + age,
+          p1Age: age,
           houseValue: houseVal,
           mortgage: mortgageRemaining,
           portfolioValue: portfolioVal,
@@ -472,11 +486,11 @@ export default function RetirementPlanner() {
 
       // Post-retirement years (from projection data)
       for (const py of projYears) {
-        const yearsFromNow = py.johnAge - currentAge;
+        const yearsFromNow = py.p1Age - currentAge;
         const houseVal = Math.round(cfg.houseValue * Math.pow(1 + cfg.houseGrowthRate, yearsFromNow));
 
         let mortgageRemaining;
-        if (py.johnAge >= cfg.mortgageClearAgeIHT) {
+        if (py.p1Age >= cfg.mortgageClearAgeIHT) {
           mortgageRemaining = 0;
         } else {
           const repaid = Math.min(repaymentPerYear * yearsFromNow, cfg.mortgageRepaymentPortion);
@@ -484,8 +498,8 @@ export default function RetirementPlanner() {
         }
 
         // From 6 April 2027 SIPPs are in the taxable estate
-        const sippValPost = py.johnSipp + py.elaineSipp;
-        const isaValPost  = py.johnIsa + py.elaineIsa;
+        const sippValPost = py.p1Sipp + py.p2Sipp;
+        const isaValPost  = py.p1Isa + py.p2Isa;
         const sippsInEstatePost = py.year >= 2027;
         const estatePortfolio = sippsInEstatePost ? py.totalPortfolio : isaValPost;
 
@@ -504,7 +518,7 @@ export default function RetirementPlanner() {
 
         years.push({
           year: py.year,
-          johnAge: py.johnAge,
+          p1Age: py.p1Age,
           houseValue: houseVal,
           mortgage: mortgageRemaining,
           portfolioValue: estatePortfolio,
@@ -525,10 +539,10 @@ export default function RetirementPlanner() {
 
       // Peak IHT
       const peakIht = years.reduce((max, y) => y.ihtDue > max.ihtDue ? y : max, years[0] || { ihtDue: 0 });
-      const ihtAtRetire = years.find(y => y.johnAge === cfg.retireYear - johnBirthYear);
-      const ihtAt75 = years.find(y => y.johnAge === 75);
-      const ihtAt80 = years.find(y => y.johnAge === 80);
-      const ihtAt90 = years.find(y => y.johnAge === 90);
+      const ihtAtRetire = years.find(y => y.p1Age === cfg.retireYear - p1BirthYear);
+      const ihtAt75 = years.find(y => y.p1Age === 75);
+      const ihtAt80 = years.find(y => y.p1Age === 80);
+      const ihtAt90 = years.find(y => y.p1Age === 90);
 
       results[scName] = { years, peakIht, ihtAtRetire, ihtAt75, ihtAt80, ihtAt90 };
     }
@@ -615,9 +629,9 @@ export default function RetirementPlanner() {
     const ticks = [0, Math.round(maxV / 4), Math.round(maxV / 2), Math.round(maxV * 3 / 4), maxV];
 
     // Find milestone years
-    const johnBY = parseInt(cfg.johnDOB.split("-")[0]);
-    const mortgageYr = johnBY + cfg.mortgageClearAge;
-    const spYr = johnBY + cfg.johnSpAge;
+    const p1BY = parseInt(cfg.p1Dob.split("-")[0]);
+    const mortgageYr = p1BY + cfg.mortgageClearAge;
+    const spYr = p1BY + cfg.p1SpAge;
 
     return (
       <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
@@ -650,7 +664,7 @@ export default function RetirementPlanner() {
           const step = Math.max(1, Math.floor(maxLen / 12));
           return (i % step === 0 || i === maxLen - 1) ? (
             <text key={i} x={toX(i)} y={H - P.b + 14} textAnchor="middle" fontSize="8" fill="#4a6070">
-              {y.year} ({y.johnAge})
+              {y.year} ({y.p1Age})
             </text>
           ) : null;
         })}
@@ -718,23 +732,23 @@ export default function RetirementPlanner() {
   };
 
   // ─── Key milestones ───────────────────────────────────────────────────────
-  const johnBY = parseInt(cfg.johnDOB.split("-")[0]);
-  const elaineBY = parseInt(cfg.elaineDOB.split("-")[0]);
+  const p1BY = parseInt(cfg.p1Dob.split("-")[0]);
+  const p2BY = parseInt(cfg.p2Dob.split("-")[0]);
   const milestones = [
-    { year: cfg.retireYear, icon: "🏖️", color: "#c9a84c", title: `Retire — Age ${cfg.retireYear - johnBY}`,
+    { year: cfg.retireYear, icon: "🏖️", color: "#c9a84c", title: `Retire — Age ${cfg.retireYear - p1BY}`,
       desc: `Begin flexible drawdown. Target ${fmt(cfg.targetNetIncome + cfg.mortgageAnnualCost)} net p.a. (incl. ${fmt(cfg.mortgageAnnualCost)} mortgage)` },
-    { year: johnBY + 65, icon: "📋", color: "#4472C4", title: `John's DB Pensions Start — Age 65`,
+    { year: p1BY + 65, icon: "📋", color: "#4472C4", title: `${p1Name}'s DB Pensions Start — Age 65`,
       desc: `Atkins (${fmt(5000)}) + Pfizer (${fmt(2500)}) = ${fmt(7500)} p.a.` },
-    { year: johnBY + cfg.mortgageClearAge, icon: "🏠", color: "#e07060", title: `Mortgage Cleared — Age ${cfg.mortgageClearAge}`,
+    { year: p1BY + cfg.mortgageClearAge, icon: "🏠", color: "#e07060", title: `Mortgage Cleared — Age ${cfg.mortgageClearAge}`,
       desc: `${fmt(cfg.mortgageBalance)} paid via PCLS. Target drops to ${fmt(cfg.targetNetIncome)} net p.a.` },
-    { year: johnBY + cfg.johnSpAge, icon: "👴", color: "#70AD47", title: `John's State Pension — Age ${cfg.johnSpAge}`,
+    { year: p1BY + cfg.p1SpAge, icon: "👴", color: "#70AD47", title: `${p1Name}'s State Pension — Age ${cfg.p1SpAge}`,
       desc: `${fmt(cfg.statePension)} p.a. (current rates)` },
-    { year: elaineBY + 65, icon: "📋", color: "#5BA3A0", title: `Elaine's DB Pensions Start — Age 65`,
+    { year: p2BY + 65, icon: "📋", color: "#5BA3A0", title: `${p2Name}'s DB Pensions Start — Age 65`,
       desc: `Disney (${fmt(1237)}) + Nippon Life (${fmt(135)}) = ${fmt(1372)} p.a.` },
-    { year: elaineBY + cfg.elaineSpAge, icon: "👵", color: "#70AD47", title: `Elaine's State Pension — Age ${cfg.elaineSpAge}`,
+    { year: p2BY + cfg.p2SpAge, icon: "👵", color: "#70AD47", title: `${p2Name}'s State Pension — Age ${cfg.p2SpAge}`,
       desc: `${fmt(cfg.statePension)} p.a.` },
     ...(cfg.incomeSteps || []).map(step => ({
-      year: johnBY + step.fromAge, icon: "📉", color: "#9E7FC0",
+      year: p1BY + step.fromAge, icon: "📉", color: "#9E7FC0",
       title: `Income Step-Down — Age ${step.fromAge}`,
       desc: `Target reduces by ${(step.reduction * 100).toFixed(0)}% to ${fmt(cfg.targetNetIncome * (1 - step.reduction))} net p.a. — ${step.label}`
     })),
@@ -772,14 +786,14 @@ export default function RetirementPlanner() {
           <div style={{ ...S.card, borderColor: projCentral.exhaustionAge ? "#e0706044" : "#70AD4744" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
               <div>
-                <div style={S.sLbl}>Retirement Plan · John & Elaine Daniells</div>
+                <div style={S.sLbl}>Retirement Plan · {p1Name} & {p2Name}</div>
                 <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: 600, marginTop: 4 }}>
                   {projCentral.exhaustionAge
                     ? `Portfolio exhausted at age ${projCentral.exhaustionAge}`
                     : `Sustainable to age ${cfg.planToAge}+`}
                 </div>
                 <div style={{ fontSize: 12, color: "#6a7d8f", marginTop: 6 }}>
-                  Retire March {cfg.retireYear} (age {cfg.retireYear - johnBY}) · Target {fmt(cfg.targetNetIncome)} net p.a. · Three-scenario projection
+                  Retire March {cfg.retireYear} (age {cfg.retireYear - p1BY}) · Target {fmt(cfg.targetNetIncome)} net p.a. · Three-scenario projection
                 </div>
               </div>
               <div style={{ display: "flex", gap: 10 }}>
@@ -796,7 +810,7 @@ export default function RetirementPlanner() {
           <div style={S.g5}>
             <div style={S.sBox}>
               <div style={S.sLbl}>Portfolio Today</div>
-              <div style={{ fontSize: 20, color: "#c9a84c" }}>{fmt(cfg.johnSipp + cfg.elaineSipp + cfg.johnIsa + cfg.elaineIsa + cfg.lsegPension)}</div>
+              <div style={{ fontSize: 20, color: "#c9a84c" }}>{fmt(cfg.p1Sipp + cfg.p2Sipp + cfg.p1Isa + cfg.p2Isa + cfg.lsegPension)}</div>
             </div>
             <div style={S.sBox}>
               <div style={S.sLbl}>Projected at Retirement</div>
@@ -811,7 +825,7 @@ export default function RetirementPlanner() {
             <div style={S.sBox}>
               <div style={S.sLbl}>Guaranteed Income (max)</div>
               <div style={{ fontSize: 20, color: "#70AD47" }}>{fmt(cfg.dbPensions.reduce((s, p) => s + p.annual, 0) + cfg.statePension * 2)} p.a.</div>
-              <div style={{ fontSize: 10, color: "#4a6070", marginTop: 2 }}>From age {cfg.elaineSpAge + (elaineBY - johnBY) + johnBY === elaineBY + cfg.elaineSpAge ? cfg.elaineSpAge + 3 : 70}</div>
+              <div style={{ fontSize: 10, color: "#4a6070", marginTop: 2 }}>From age {cfg.p2SpAge + (p2BY - p1BY) + p1BY === p2BY + cfg.p2SpAge ? cfg.p2SpAge + 3 : 70}</div>
             </div>
             <div style={S.sBox}>
               <div style={S.sLbl}>Portfolio at 80</div>
@@ -919,8 +933,8 @@ export default function RetirementPlanner() {
               <thead>
                 <tr>
                   <th style={S.th}>Year</th>
-                  <th style={S.th}>John Age</th>
-                  <th style={S.th}>Elaine Age</th>
+                  <th style={S.th}>{p1Name} Age</th>
+                  <th style={S.th}>{p2Name} Age</th>
                   <th style={S.thR}>Income Target</th>
                   <th style={S.thR}>Guaranteed</th>
                   <th style={S.thR}>From Portfolio</th>
@@ -935,18 +949,18 @@ export default function RetirementPlanner() {
                   const events = [];
                   if (y.pclsEvent) events.push(`PCLS: ${fmt(y.pclsEvent)}`);
                   if (y.mortgageEvent) events.push(`Mortgage: -${fmt(y.mortgageEvent)}`);
-                  const johnDB = cfg.dbPensions.filter(p => p.owner === "John" && y.johnAge === p.startAge).map(p => p.name);
-                  const elaineDB = cfg.dbPensions.filter(p => p.owner === "Elaine" && y.elaineAge === p.startAge).map(p => p.name);
-                  if (johnDB.length) events.push(`J: ${johnDB.join(", ")} starts`);
-                  if (elaineDB.length) events.push(`E: ${elaineDB.join(", ")} starts`);
-                  if (y.johnAge === cfg.johnSpAge) events.push("J: State Pension");
-                  if (y.elaineAge === cfg.elaineSpAge) events.push("E: State Pension");
+                  const p1DB = cfg.dbPensions.filter(p => p.owner === "person1" && y.p1Age === p.startAge).map(p => p.name);
+                  const p2DB = cfg.dbPensions.filter(p => p.owner === "person2" && y.p2Age === p.startAge).map(p => p.name);
+                  if (p1DB.length) events.push(`J: ${p1DB.join(", ")} starts`);
+                  if (p2DB.length) events.push(`E: ${p2DB.join(", ")} starts`);
+                  if (y.p1Age === cfg.p1SpAge) events.push("J: State Pension");
+                  if (y.p2Age === cfg.p2SpAge) events.push("E: State Pension");
 
                   return (
                     <tr key={y.year} style={y.exhausted ? { background: "#3d1e1e" } : {}} onMouseEnter={e => e.currentTarget.style.background = y.exhausted ? "#3d1e1e" : "#1e3040"} onMouseLeave={e => e.currentTarget.style.background = y.exhausted ? "#3d1e1e" : ""}>
                       <td style={{ ...S.td, fontWeight: 600 }}>{y.year}</td>
-                      <td style={S.td}>{y.johnAge}</td>
-                      <td style={S.td}>{y.elaineAge}</td>
+                      <td style={S.td}>{y.p1Age}</td>
+                      <td style={S.td}>{y.p2Age}</td>
                       <td style={S.tdR}>{fmt(y.incomeNeeded)}</td>
                       <td style={{ ...S.tdR, color: "#70AD47" }}>{fmt(y.totalGuaranteed)}</td>
                       <td style={{ ...S.tdR, color: "#c9a84c" }}>{fmt(y.portfolioDraw)}</td>
@@ -984,13 +998,13 @@ export default function RetirementPlanner() {
                 <tr>
                   <th style={S.th}>Year</th>
                   <th style={S.th}>Age (J/E)</th>
-                  <th style={S.thR}>John SIPP Draw</th>
-                  <th style={S.thR}>Elaine SIPP Draw</th>
+                  <th style={S.thR}>{p1Name} SIPP Draw</th>
+                  <th style={S.thR}>{p2Name} SIPP Draw</th>
                   <th style={S.thR}>ISA Draw</th>
-                  <th style={S.thR}>John SIPP Bal</th>
-                  <th style={S.thR}>Elaine SIPP Bal</th>
-                  <th style={S.thR}>John ISA Bal</th>
-                  <th style={S.thR}>Elaine ISA Bal</th>
+                  <th style={S.thR}>{p1Name} SIPP Bal</th>
+                  <th style={S.thR}>{p2Name} SIPP Bal</th>
+                  <th style={S.thR}>{p1Name} ISA Bal</th>
+                  <th style={S.thR}>{p2Name} ISA Bal</th>
                   <th style={S.thR}>Total Portfolio</th>
                 </tr>
               </thead>
@@ -998,14 +1012,14 @@ export default function RetirementPlanner() {
                 {proj.years.map(y => (
                   <tr key={y.year} onMouseEnter={e => e.currentTarget.style.background = "#1e3040"} onMouseLeave={e => e.currentTarget.style.background = ""}>
                     <td style={{ ...S.td, fontWeight: 600 }}>{y.year}</td>
-                    <td style={S.td}>{y.johnAge}/{y.elaineAge}</td>
-                    <td style={{ ...S.tdR, color: "#c9a84c" }}>{y.drawdownDetail ? fmt(y.drawdownDetail.johnSippDraw) : "—"}</td>
-                    <td style={{ ...S.tdR, color: "#c9a84c" }}>{y.drawdownDetail ? fmt(y.drawdownDetail.elaineSippDraw) : "—"}</td>
+                    <td style={S.td}>{y.p1Age}/{y.p2Age}</td>
+                    <td style={{ ...S.tdR, color: "#c9a84c" }}>{y.drawdownDetail ? fmt(y.drawdownDetail.p1SippDraw) : "—"}</td>
+                    <td style={{ ...S.tdR, color: "#c9a84c" }}>{y.drawdownDetail ? fmt(y.drawdownDetail.p2SippDraw) : "—"}</td>
                     <td style={{ ...S.tdR, color: "#70AD47" }}>{y.drawdownDetail ? fmt(y.drawdownDetail.isaDraw) : "—"}</td>
-                    <td style={S.tdR}>{fmt(y.johnSipp)}</td>
-                    <td style={S.tdR}>{fmt(y.elaineSipp)}</td>
-                    <td style={S.tdR}>{fmt(y.johnIsa)}</td>
-                    <td style={S.tdR}>{fmt(y.elaineIsa)}</td>
+                    <td style={S.tdR}>{fmt(y.p1Sipp)}</td>
+                    <td style={S.tdR}>{fmt(y.p2Sipp)}</td>
+                    <td style={S.tdR}>{fmt(y.p1Isa)}</td>
+                    <td style={S.tdR}>{fmt(y.p2Isa)}</td>
                     <td style={{ ...S.tdR, fontWeight: 600, color: y.totalPortfolio > 0 ? "#e8dcc8" : "#e07060" }}>{fmt(y.totalPortfolio)}</td>
                   </tr>
                 ))}
@@ -1054,14 +1068,14 @@ export default function RetirementPlanner() {
               <thead>
                 <tr>
                   <th style={S.th}>Year</th>
-                  <th style={S.thR}>John Gross</th>
-                  <th style={S.thR}>John PA Used</th>
-                  <th style={S.thR}>John Tax</th>
-                  <th style={S.thR}>John Net</th>
-                  <th style={S.thR}>Elaine Gross</th>
-                  <th style={S.thR}>Elaine PA Used</th>
-                  <th style={S.thR}>Elaine Tax</th>
-                  <th style={S.thR}>Elaine Net</th>
+                  <th style={S.thR}>{p1Name} Gross</th>
+                  <th style={S.thR}>{p1Name} PA Used</th>
+                  <th style={S.thR}>{p1Name} Tax</th>
+                  <th style={S.thR}>{p1Name} Net</th>
+                  <th style={S.thR}>{p2Name} Gross</th>
+                  <th style={S.thR}>{p2Name} PA Used</th>
+                  <th style={S.thR}>{p2Name} Tax</th>
+                  <th style={S.thR}>{p2Name} Net</th>
                   <th style={S.thR}>ISA (Tax-Free)</th>
                   <th style={S.thR}>Total Tax</th>
                   <th style={S.thR}>Effective Rate</th>
@@ -1071,20 +1085,20 @@ export default function RetirementPlanner() {
                 {proj.years.map(y => {
                   const d = y.drawdownDetail;
                   if (!d) return null;
-                  const jPaUsed = Math.min(d.johnGross, d.johnTax.pa || TAX.personalAllowance);
-                  const ePaUsed = Math.min(d.elaineGross, d.elaineTax.pa || TAX.personalAllowance);
+                  const jPaUsed = Math.min(d.p1Gross, d.p1Tax.pa || TAX.personalAllowance);
+                  const ePaUsed = Math.min(d.p2Gross, d.p2Tax.pa || TAX.personalAllowance);
                   const effRate = d.totalGross > 0 ? d.totalTax / d.totalGross : 0;
                   return (
                     <tr key={y.year} onMouseEnter={e => e.currentTarget.style.background = "#1e3040"} onMouseLeave={e => e.currentTarget.style.background = ""}>
                       <td style={{ ...S.td, fontWeight: 600 }}>{y.year}</td>
-                      <td style={S.tdR}>{fmt(d.johnGross)}</td>
+                      <td style={S.tdR}>{fmt(d.p1Gross)}</td>
                       <td style={{ ...S.tdR, color: "#70AD47" }}>{fmt(jPaUsed)}</td>
-                      <td style={{ ...S.tdR, color: "#e07060" }}>{fmt(d.johnTax.tax)}</td>
-                      <td style={S.tdR}>{fmt(d.johnTax.net)}</td>
-                      <td style={S.tdR}>{fmt(d.elaineGross)}</td>
+                      <td style={{ ...S.tdR, color: "#e07060" }}>{fmt(d.p1Tax.tax)}</td>
+                      <td style={S.tdR}>{fmt(d.p1Tax.net)}</td>
+                      <td style={S.tdR}>{fmt(d.p2Gross)}</td>
                       <td style={{ ...S.tdR, color: "#70AD47" }}>{fmt(ePaUsed)}</td>
-                      <td style={{ ...S.tdR, color: "#e07060" }}>{fmt(d.elaineTax.tax)}</td>
-                      <td style={S.tdR}>{fmt(d.elaineTax.net)}</td>
+                      <td style={{ ...S.tdR, color: "#e07060" }}>{fmt(d.p2Tax.tax)}</td>
+                      <td style={S.tdR}>{fmt(d.p2Tax.net)}</td>
                       <td style={{ ...S.tdR, color: "#70AD47" }}>{fmt(d.isaDraw)}</td>
                       <td style={{ ...S.tdR, color: "#e07060", fontWeight: 600 }}>{fmt(d.totalTax)}</td>
                       <td style={{ ...S.tdR, color: "#6a7d8f" }}>{pct(effRate)}</td>
@@ -1240,7 +1254,7 @@ export default function RetirementPlanner() {
                 const step = Math.max(1, Math.floor(yrs.length / 14));
                 return (i % step === 0 || i === yrs.length - 1) ? (
                   <text key={i} x={toX(i)} y={H - P.b + 14} textAnchor="middle" fontSize="8" fill="#4a6070">
-                    {y.year} ({y.johnAge})
+                    {y.year} ({y.p1Age})
                   </text>
                 ) : null;
               })}
@@ -1297,7 +1311,7 @@ export default function RetirementPlanner() {
                 const step = Math.max(1, Math.floor(maxLen / 14));
                 return (i % step === 0 || i === maxLen - 1) ? (
                   <text key={i} x={toX(i)} y={H - P.b + 14} textAnchor="middle" fontSize="8" fill="#4a6070">
-                    {y.year} ({y.johnAge})
+                    {y.year} ({y.p1Age})
                   </text>
                 ) : null;
               })}
@@ -1330,7 +1344,7 @@ export default function RetirementPlanner() {
               <div>
                 <div style={S.sLbl}>Estimated IHT Liability · Second Death (Spouse Allowances Combined)</div>
                 <div style={{ fontSize: 22, color: "#e07060", fontWeight: 600, marginTop: 4 }}>
-                  {ihtCentral.peakIht ? `Peak liability: ${fmt(ihtCentral.peakIht.ihtDue)} at age ${ihtCentral.peakIht.johnAge}` : "No IHT liability"}
+                  {ihtCentral.peakIht ? `Peak liability: ${fmt(ihtCentral.peakIht.ihtDue)} at age ${ihtCentral.peakIht.p1Age}` : "No IHT liability"}
                 </div>
                 <div style={{ fontSize: 12, color: "#6a7d8f", marginTop: 6 }}>
                   Estate includes portfolio + property ({fmt(cfg.houseValue)} today, {pct(cfg.houseGrowthRate)} growth) · Mortgage {fmt(cfg.mortgageNow)} clearing at {cfg.mortgageClearAgeIHT} · Combined allowance up to {fmt((cfg.ihtNrb + cfg.ihtRnrb) * 2)}
@@ -1359,7 +1373,7 @@ export default function RetirementPlanner() {
               <div style={{ fontSize: 20, color: (ihtData.ihtAtRetire?.ihtDue || 0) > 0 ? "#e07060" : "#70AD47" }}>
                 {ihtData.ihtAtRetire ? fmt(ihtData.ihtAtRetire.ihtDue) : "—"}
               </div>
-              <div style={{ fontSize: 10, color: "#4a6070", marginTop: 2 }}>Age {cfg.retireYear - parseInt(cfg.johnDOB.split("-")[0])}</div>
+              <div style={{ fontSize: 10, color: "#4a6070", marginTop: 2 }}>Age {cfg.retireYear - parseInt(cfg.p1Dob.split("-")[0])}</div>
             </div>
             <div style={S.sBox}>
               <div style={S.sLbl}>IHT at 80</div>
@@ -1441,7 +1455,7 @@ export default function RetirementPlanner() {
                 <div key={sc.key} style={{ ...S.sBox, borderColor: sc.color + "44", cursor: "pointer" }} onClick={() => setScenario(sc.key)}>
                   <div style={{ ...S.sLbl, color: sc.color }}>{sc.label} Scenario</div>
                   <div style={{ fontSize: 11, color: "#6a7d8f", lineHeight: 1.8, marginTop: 6 }}>
-                    <div>Peak IHT: <span style={{ color: "#e07060", fontWeight: 600 }}>{d.peakIht ? fmt(d.peakIht.ihtDue) : "—"}</span> {d.peakIht ? `(age ${d.peakIht.johnAge})` : ""}</div>
+                    <div>Peak IHT: <span style={{ color: "#e07060", fontWeight: 600 }}>{d.peakIht ? fmt(d.peakIht.ihtDue) : "—"}</span> {d.peakIht ? `(age ${d.peakIht.p1Age})` : ""}</div>
                     <div>IHT at 75: <span style={{ color: "#e8dcc8" }}>{d.ihtAt75 ? fmt(d.ihtAt75.ihtDue) : "—"}</span></div>
                     <div>IHT at 80: <span style={{ color: "#e8dcc8" }}>{d.ihtAt80 ? fmt(d.ihtAt80.ihtDue) : "—"}</span></div>
                     <div>IHT at 90: <span style={{ color: "#e8dcc8" }}>{d.ihtAt90 ? fmt(d.ihtAt90.ihtDue) : "—"}</span></div>
@@ -1474,15 +1488,15 @@ export default function RetirementPlanner() {
               <tbody>
                 {ihtData.years.map(y => (
                   <tr key={y.year}
-                    style={y.johnAge === peakIht?.johnAge ? { background: "#3d1e1e44" } : y.year === 2027 ? { background: "#e0706010", borderTop: "1px solid #e0706040" } : {}}
+                    style={y.p1Age === peakIht?.p1Age ? { background: "#3d1e1e44" } : y.year === 2027 ? { background: "#e0706010", borderTop: "1px solid #e0706040" } : {}}
                     onMouseEnter={e => e.currentTarget.style.background = "#1e3040"}
-                    onMouseLeave={e => e.currentTarget.style.background = y.johnAge === peakIht?.johnAge ? "#3d1e1e44" : y.year === 2027 ? "#e0706010" : ""}
+                    onMouseLeave={e => e.currentTarget.style.background = y.p1Age === peakIht?.p1Age ? "#3d1e1e44" : y.year === 2027 ? "#e0706010" : ""}
                   >
                     <td style={{ ...S.td, fontWeight: 600 }}>
                       {y.year}
                       {y.year === 2027 && <span style={{ fontSize: 9, color: "#e07060", marginLeft: 4 }}>▲SIPP</span>}
                     </td>
-                    <td style={S.td}>{y.johnAge}</td>
+                    <td style={S.td}>{y.p1Age}</td>
                     <td style={S.tdR}>
                       {fmt(y.portfolioValue)}
                       <div style={{ fontSize: 9, color: "#6a7d8f" }}>{y.sippsInEstate ? "ISA+SIPP" : "ISA only"}</div>
@@ -1531,17 +1545,17 @@ export default function RetirementPlanner() {
               <div style={{ ...S.sec, marginBottom: 16 }}>People & Dates</div>
               <NumInput label="Retire Year" value={draft.retireYear} field="retireYear" />
               <NumInput label="Plan To Age" value={draft.planToAge} field="planToAge" />
-              <NumInput label="John State Pension Age" value={draft.johnSpAge} field="johnSpAge" />
-              <NumInput label="Elaine State Pension Age" value={draft.elaineSpAge} field="elaineSpAge" />
+              <NumInput label={`${p1Name} State Pension Age`} value={draft.p1SpAge} field="p1SpAge" />
+              <NumInput label={`${p2Name} State Pension Age`} value={draft.p2SpAge} field="p2SpAge" />
             </div>
 
             {/* Portfolio */}
             <div style={S.card}>
               <div style={{ ...S.sec, marginBottom: 16 }}>Portfolio Values {livePortfolio && <span style={{ color: "#70AD47", fontSize: 9, marginLeft: 6 }}>● LIVE</span>}</div>
-              <NumInput label="John SIPP" value={draft.johnSipp} field="johnSipp" prefix="£" />
-              <NumInput label="Elaine SIPP" value={draft.elaineSipp} field="elaineSipp" prefix="£" />
-              <NumInput label="John ISA" value={draft.johnIsa} field="johnIsa" prefix="£" />
-              <NumInput label="Elaine ISA" value={draft.elaineIsa} field="elaineIsa" prefix="£" />
+              <NumInput label={`${p1Name} SIPP`} value={draft.p1Sipp} field="p1Sipp" prefix="£" />
+              <NumInput label={`${p2Name} SIPP`} value={draft.p2Sipp} field="p2Sipp" prefix="£" />
+              <NumInput label={`${p1Name} ISA`} value={draft.p1Isa} field="p1Isa" prefix="£" />
+              <NumInput label={`${p2Name} ISA`} value={draft.p2Isa} field="p2Isa" prefix="£" />
               <NumInput label="LSEG Pension" value={draft.lsegPension} field="lsegPension" prefix="£" />
               <NumInput label="Monthly Contributions" value={draft.monthlyContrib} field="monthlyContrib" prefix="£" suffix="/mo" />
             </div>
@@ -1554,8 +1568,8 @@ export default function RetirementPlanner() {
               <NumInput label="Mortgage Balance at Retirement" value={draft.mortgageBalance} field="mortgageBalance" prefix="£" />
               <NumInput label="Mortgage Monthly Payment" value={Math.round(draft.mortgageAnnualCost / 12)} field="_mortgageMonthly" prefix="£" suffix="/mo" />
               <div style={{ fontSize: 10, color: "#4a6070", marginTop: -8, marginBottom: 12 }}>= {fmt(draft.mortgageAnnualCost)} p.a. — added on top of target until age {draft.mortgageClearAge}</div>
-              <NumInput label="Clear Mortgage at John Age" value={draft.mortgageClearAge} field="mortgageClearAge" />
-              <NumInput label="Elaine Part-Time Income" value={draft.elainePartTime} field="elainePartTime" prefix="£" suffix="/yr (to 2031)" />
+              <NumInput label={`Clear Mortgage at ${p1Name} Age`} value={draft.mortgageClearAge} field="mortgageClearAge" />
+              <NumInput label={`${p2Name} Part-Time Income`} value={draft.p2PartTime} field="p2PartTime" prefix="£" suffix="/yr (to 2031)" />
             </div>
           </div>
 
@@ -1566,7 +1580,7 @@ export default function RetirementPlanner() {
             <table style={S.tbl}>
               <thead>
                 <tr>
-                  <th style={S.th}>From John's Age</th>
+                  <th style={S.th}>From {p1Name}'s Age</th>
                   <th style={S.thR}>Reduction</th>
                   <th style={S.thR}>Target Income</th>
                   <th style={S.th}>Reason</th>
