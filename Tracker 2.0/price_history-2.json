@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "version": "v2.0",
+    "fetchDate": "2026-03-11",
+    "fetchDateDisplay": "11 Mar 2026",
+    "prevDate": "2026-03-10",
+    "prevDateDisplay": "10 Mar 2026",
+    "fetchTimestamp": "2026-03-11T12:00:00Z",
+    "lsegPrice": null,
+    "lsegPriceDate": null
+  },
+  "accounts": [],
+  "history": [],
+  "crypto": [],
+  "cryptoHistory": []
+}

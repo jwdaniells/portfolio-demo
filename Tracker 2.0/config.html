@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Configuration Editor · Portfolio Tracker</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./user_config.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1923; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type=number] { -moz-appearance: textfield; }
+    select { cursor: pointer; }
+    button { cursor: pointer; transition: opacity 0.15s; }
+    button:hover { opacity: 0.85; }
+    input:focus, select:focus { outline: none; border-color: #c9a84c88 !important; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // Fetch JSX, transform with Babel, then mount
+    fetch('./config_editor.jsx?v=' + Date.now())
+      .then(r => r.text())
+      .then(src => {
+        const modified = src
+          .replace('import { useState, useEffect } from "react";',
+                   'const { useState, useEffect } = React;')
+          .replace('export default function ConfigEditor',
+                   'window.ConfigEditor = function ConfigEditor');
+
+        const transformed = Babel.transform(modified, { presets: ['react'] }).code;
+        eval(transformed);
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(window.ConfigEditor));
+      })
+      .catch(err => {
+        document.getElementById('root').innerHTML =
+          '<div style="color:#e07060;padding:40px;font-family:sans-serif">Error: ' + err + '</div>';
+      });
+  </script>
+</body>
+</html>

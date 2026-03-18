@@ -12,19 +12,22 @@ window.USER_CONFIG = {
 
   "people": {
     "person1": { "name": "John",   "dob": "1968-03-27" },
-    "person2": { "name": "Elaine", "dob": "1971-02-26" }
+    "person2": { "name": "Elaine", "dob": "1971-02-26" },
+    "hasPerson2": true
   },
 
   "accounts": [
-    { "id": "john-sipp",      "person": "person1", "type": "SIPP" },
-    { "id": "john-isa",       "person": "person1", "type": "ISA" },
-    { "id": "john-pension",   "person": "person1", "type": "Workplace Pension" },
-    { "id": "john-gia",       "person": "person1", "type": "GIA" },
-    { "id": "elaine-sipp",    "person": "person2", "type": "SIPP" },
-    { "id": "elaine-isa",     "person": "person2", "type": "ISA" },
-    { "id": "elaine-pension", "person": "person2", "type": "Workplace Pension" },
-    { "id": "elaine-gia",     "person": "person2", "type": "GIA" }
+    { "id": "john-sipp",      "person": "person1", "type": "SIPP", "provider": "" },
+    { "id": "john-isa",       "person": "person1", "type": "ISA", "provider": "" },
+    { "id": "john-pension",   "person": "person1", "type": "Workplace Pension", "provider": "" },
+    { "id": "john-gia",       "person": "person1", "type": "GIA", "provider": "" },
+    { "id": "elaine-sipp",    "person": "person2", "type": "SIPP", "provider": "" },
+    { "id": "elaine-isa",     "person": "person2", "type": "ISA", "provider": "" },
+    { "id": "elaine-pension", "person": "person2", "type": "Workplace Pension", "provider": "" },
+    { "id": "elaine-gia",     "person": "person2", "type": "GIA", "provider": "" }
   ],
+
+  "holdings": [],
 
   "goal": {
     "target":         1400000,
@@ -35,15 +38,6 @@ window.USER_CONFIG = {
     "rateProjected":  0.115,
     "rateBear":       0.06,
     "rateBull":       0.17
-  },
-
-  "charlieUni": {
-    "person":        "person1",
-    "s1Options":     168,
-    "s2Options":     100,
-    "monthlyAccom":  600,
-    "monthlyMaint":  200,
-    "pbAnnualRate":  0.044
   },
 
   "retirement": {
