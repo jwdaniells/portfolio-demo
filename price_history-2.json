@@ -1,11 +1,11 @@
 {
   "meta": {
     "version": "v1.20",
-    "fetchDate": "2026-04-02",
-    "fetchDateDisplay": "2 Apr 2026",
-    "prevDate": "2026-04-01",
-    "prevDateDisplay": "1 Apr 2026",
-    "fetchTimestamp": "2026-04-02T19:38:00Z",
+    "fetchDate": "2026-04-03",
+    "fetchDateDisplay": "3 Apr 2026",
+    "prevDate": "2026-04-02",
+    "prevDateDisplay": "2 Apr 2026",
+    "fetchTimestamp": "2026-04-03T18:05:00Z",
     "lsegPrice": 89.2,
     "lsegPriceDate": "2026-04-02"
   },
@@ -30,7 +30,7 @@
           "prevPrice": 107.86,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -47,7 +47,7 @@
           "prevPrice": 2.7675,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -64,7 +64,7 @@
           "prevPrice": 2.8743,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -81,7 +81,7 @@
           "prevPrice": 19.115,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -98,7 +98,7 @@
           "prevPrice": 2.6785,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -115,7 +115,7 @@
           "prevPrice": 2.217,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -132,7 +132,7 @@
           "prevPrice": 351.0119,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         }
       ]
@@ -157,7 +157,7 @@
           "prevPrice": 107.86,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -175,7 +175,7 @@
           "prevPrice": 1.1156,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -192,7 +192,7 @@
           "prevPrice": 96.13,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         }
       ]
@@ -275,7 +275,7 @@
           "prevPrice": 2.7675,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -292,7 +292,7 @@
           "prevPrice": 2.8743,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -309,7 +309,7 @@
           "prevPrice": 351.0119,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         }
       ]
@@ -333,7 +333,7 @@
           "prevPrice": 96.13,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         },
         {
@@ -349,7 +349,7 @@
           "prevPrice": 255.8682,
           "fetchStatus": {
             "ok": true,
-            "source": "Yahoo Finance 2026-04-02"
+            "source": "Yahoo Finance 2026-04-03"
           }
         }
       ]
@@ -804,6 +804,29 @@
         "elaine-isa|VGAC": 257.7445
       },
       "notes": "Auto-fetch 2026-04-02."
+    },
+    {
+      "date": "2026-04-03",
+      "totalValue": 824232,
+      "prices": {
+        "john-sipp|BCHS": 106.92,
+        "john-sipp|BNY": 2.7743,
+        "john-sipp|HSBC": 2.9239,
+        "john-sipp|HISL": 19.203,
+        "john-sipp|LION": 2.6858,
+        "john-sipp|PMIT": 2.219,
+        "john-sipp|VLS80": 354.269,
+        "john-isa|BCHS": 106.92,
+        "john-isa|RLSE": 1.0997,
+        "john-isa|SWDA": 96.3,
+        "john-pension": 14982.21,
+        "elaine-sipp|BNY": 2.7743,
+        "elaine-sipp|HSBC": 2.9239,
+        "elaine-sipp|VLS80": 354.269,
+        "elaine-isa|SWDA": 96.3,
+        "elaine-isa|VGAC": 257.7445
+      },
+      "notes": "Auto-fetch 2026-04-03."
     }
   ],
   "crypto": [
@@ -813,9 +836,9 @@
       "symbol": "BTC",
       "yahooSymbol": "BTC-GBP",
       "units": 2.24061,
-      "price": 50599.55,
-      "priceDate": "2026-04-02",
-      "prevPrice": 51220.78
+      "price": 50653.05,
+      "priceDate": "2026-04-03",
+      "prevPrice": 50599.55
     },
     {
       "id": "eth",
@@ -823,9 +846,9 @@
       "symbol": "ETH",
       "yahooSymbol": "ETH-GBP",
       "units": 1.80969,
-      "price": 1554.63,
-      "priceDate": "2026-04-02",
-      "prevPrice": 1610.49
+      "price": 1553.26,
+      "priceDate": "2026-04-03",
+      "prevPrice": 1554.63
     },
     {
       "id": "xrp",
@@ -833,9 +856,9 @@
       "symbol": "XRP",
       "yahooSymbol": "XRP-GBP",
       "units": 4255.0,
-      "price": 0.985764,
-      "priceDate": "2026-04-02",
-      "prevPrice": 1.014729
+      "price": 1.000854,
+      "priceDate": "2026-04-03",
+      "prevPrice": 0.985764
     },
     {
       "id": "ada",
@@ -843,9 +866,9 @@
       "symbol": "ADA",
       "yahooSymbol": "ADA-GBP",
       "units": 831.813,
-      "price": 0.181112,
-      "priceDate": "2026-04-02",
-      "prevPrice": 0.187429
+      "price": 0.188588,
+      "priceDate": "2026-04-03",
+      "prevPrice": 0.181112
     }
   ],
   "cryptoHistory": [
@@ -912,6 +935,10 @@
     {
       "date": "2026-04-02",
       "totalValue": 120532.33
+    },
+    {
+      "date": "2026-04-03",
+      "totalValue": 120720.15
     }
   ]
 }
